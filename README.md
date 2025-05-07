@@ -11,7 +11,7 @@ This repository contains links to example code for products built on The Graph. 
   
 
 - **subgraphs/**
-  - 
+  - [**subgraphs-quickstart-workshop UPDATE LINK**](): Quickstart repo with video workshop to learn how to get going fast developing subgraphs.
 
 ## License
 
