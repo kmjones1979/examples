@@ -1,6 +1,6 @@
-# Graph Protocol Examples
+# The Graph - Example Repositories
 
-This repository contains example code for products built on The Graph Protocol. Each folder under this directory represents a separate example or demo showcasing different Graph Protocol capabilities.
+This repository contains links to example code for products built on The Graph. Each folder under this directory represents a separate example or demo showcasing various features and use-cases.
 
 ## Contents
 
