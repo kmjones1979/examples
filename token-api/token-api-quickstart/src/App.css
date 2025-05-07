@@ -1,0 +1,116 @@
+/* General App Styles */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f4f7f6; /* Light grey background */
+  color: #333; /* Dark grey text */
+}
+
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #282c34; /* Dark header */
+  padding: 20px;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.App-header h1 {
+    margin: 0;
+}
+
+main {
+    padding: 0 20px; /* Add some padding to the main content area */
+}
+
+/* Network Selector */
+.network-selector {
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.network-selector label {
+  margin-right: 0.5rem;
+  font-weight: bold;
+}
+
+.network-selector select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: white;
+  font-size: 1rem;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1.5rem 0;
+  gap: 1rem;
+}
+
+.pagination-controls button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #3498db;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pagination-controls button:hover {
+  background-color: #2980b9;
+}
+
+.pagination-controls button:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.page-indicator {
+  font-weight: bold;
+}
+
+/* Loading Spinner Animation */
+.loading-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.fetch-button {
+  min-width: 120px; /* Prevent button size changes between states */
+}
+
+/* Add other base styles as needed */ 
