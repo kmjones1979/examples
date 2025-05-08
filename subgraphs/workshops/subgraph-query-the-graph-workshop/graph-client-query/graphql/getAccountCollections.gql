@@ -1,0 +1,8 @@
+query GetAccountCollections {
+	collections(first: 10, where: { totalSupply_gt: "500" }) {
+		id
+		name
+		symbol
+		totalSupply
+	}
+}

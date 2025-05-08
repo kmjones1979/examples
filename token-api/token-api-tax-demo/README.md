@@ -1,5 +1,7 @@
 # The Graph Token API — Taxes & Accounting Usecase
 
+Built by [Marcus Rein](https://www.twitter.com/Marcus_Rein_)
+
 Token API Docs: https://thegraph.com/docs/en/token-api/quick-start/
 
 > **Audience:** Tax advisors, CPAs, accounting teams, and back-office engineers who need reliable on-chain token data for compliance, reporting, and audit purposes.

@@ -1,0 +1,125 @@
+type Assign @entity(immutable: true) {
+	id: Bytes!
+	to: Bytes! # address
+	punkIndex: BigInt! # uint256
+	blockNumber: BigInt!
+	blockTimestamp: BigInt!
+	transactionHash: Bytes!
+}
+
+type Transfer @entity(immutable: true) {
+	id: Bytes!
+	from: Bytes! # address
+	to: Bytes! # address
+	value: BigInt! # uint256
+	blockNumber: BigInt!
+	blockTimestamp: BigInt!
+	transactionHash: Bytes!
+}
+
+type PunkTransfer @entity(immutable: true) {
+	id: Bytes!
+	from: Bytes! # address
+	to: Bytes! # address
+	punkIndex: BigInt! # uint256
+	blockNumber: BigInt!
+	blockTimestamp: BigInt!
+	transactionHash: Bytes!
+}
+
+type PunkOffered @entity(immutable: true) {
+	id: Bytes!
+	punkIndex: BigInt! # uint256
+	minValue: BigInt! # uint256
+	toAddress: Bytes! # address
+	blockNumber: BigInt!
+	blockTimestamp: BigInt!
+	transactionHash: Bytes!
+}
+
+type PunkBidEntered @entity(immutable: true) {
+	id: Bytes!
+	punkIndex: BigInt! # uint256
+	value: BigInt! # uint256
+	fromAddress: Bytes! # address
+	blockNumber: BigInt!
+	blockTimestamp: BigInt!
+	transactionHash: Bytes!
+}
+
+type PunkBidWithdrawn @entity(immutable: true) {
+	id: Bytes!
+	punkIndex: BigInt! # uint256
+	value: BigInt! # uint256
+	fromAddress: Bytes! # address
+	blockNumber: BigInt!
+	blockTimestamp: BigInt!
+	transactionHash: Bytes!
+}
+
+type PunkBought @entity(immutable: true) {
+	id: Bytes!
+	punkIndex: BigInt! # uint256
+	value: BigInt! # uint256
+	fromAddress: Bytes! # address
+	toAddress: Bytes! # address
+	blockNumber: BigInt!
+	blockTimestamp: BigInt!
+	transactionHash: Bytes!
+}
+
+type PunkNoLongerForSale @entity(immutable: true) {
+	id: Bytes!
+	punkIndex: BigInt! # uint256
+	blockNumber: BigInt!
+	blockTimestamp: BigInt!
+	transactionHash: Bytes!
+}
+
+type PunkBoughtData @entity(timeseries: true) {
+	id: Int8!
+	timestamp: Timestamp!
+	punkIndex: BigInt!
+	value: BigInt!
+}
+
+type PunkBoughtStats
+	@aggregation(intervals: ["hour", "day"], source: "PunkBoughtData") {
+	id: Int8!
+	timestamp: Timestamp!
+	totalValue: BigInt! @aggregate(fn: "sum", arg: "value")
+	count: BigInt! @aggregate(fn: "count")
+	firstValue: BigInt! @aggregate(fn: "first", arg: "value")
+	lastValue: BigInt! @aggregate(fn: "last", arg: "value")
+	minValue: BigInt! @aggregate(fn: "min", arg: "value")
+	maxValue: BigInt! @aggregate(fn: "max", arg: "value")
+	maxPositiveValue: BigInt! @aggregate(fn: "max", arg: "greatest(value, 0)")
+	totalHighValueSales: BigInt!
+		@aggregate(
+			fn: "sum"
+			arg: "case when value > 1000000000000000000 then value else 0 end"
+		)
+	highValueSaleCount: BigInt!
+		@aggregate(
+			fn: "count"
+			arg: "case when value > 1000000000000000000 then 1 else null end"
+		)
+	salesBelow1ETHCount: BigInt!
+		@aggregate(
+			fn: "count"
+			arg: "case when value < 1000000000000000000 then 1 else null end"
+		)
+	salesBetween1And10ETHCount: BigInt!
+		@aggregate(
+			fn: "count"
+			arg: "case when value >= 1000000000000000000 and value < 10000000000000000000 then 1 else null end"
+		)
+	salesAbove10ETHCount: BigInt!
+		@aggregate(
+			fn: "count"
+			arg: "case when value >= 10000000000000000000 then 1 else null end"
+		)
+	cumulativeTotalValue: BigInt!
+		@aggregate(fn: "sum", arg: "value", cumulative: true)
+	cumulativeSalesCount: BigInt! @aggregate(fn: "count", cumulative: true)
+}

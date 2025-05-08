@@ -1,5 +1,7 @@
 # TokenAPI Quickstart Project
 
+Built by [Marcus Rein](https://www.twitter.com/Marcus_Rein_)
+
 This repository provides examples for integrating The Graph's Token API into your application as well as MCP integration with Cursor IDE. 
 
 For detailed documentation, visit the [official Token API docs](https://thegraph.com/docs/en/token-api/quick-start/).
