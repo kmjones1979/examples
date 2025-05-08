@@ -1,0 +1,296 @@
+body {
+    font-family: sans-serif;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    /* align-items: center; Maybe remove general center alignment */
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center; /* Center heading */
+    width: 100%;
+    margin-bottom: 20px; /* Add space below heading */
+}
+
+/* Intro content width constraint */
+.intro-section {
+    max-width: 800px;
+    margin: 0 auto 30px auto;
+    text-align: center;
+}
+
+.intro-section p {
+    line-height: 1.5;
+}
+
+/* New container for controls */
+.controls-container {
+    display: flex;
+    justify-content: space-between; /* Space columns */
+    gap: 30px; /* Space between columns */
+    width: 90%;
+    max-width: 800px; /* Reducing max width for better readability */
+    margin: 0 auto 20px auto; /* Center container and add bottom margin */
+}
+
+/* Styling for each column */
+.controls-column {
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Make columns share space equally */
+    min-width: 0; /* Prevent flex overflow issues */
+}
+
+/* Adjust form group alignment */
+.form-group {
+    margin-bottom: 10px; /* Consistent spacing */
+    width: 100%; /* Take full width of column */
+    /* display: flex; align-items: center; Keep if label next to input */
+     /* Remove flex settings if labels are above */
+}
+
+.form-group label {
+     display: block; /* Labels above controls */
+     margin-bottom: 4px;
+     font-weight: bold;
+     width: auto;
+     text-align: left;
+     /* Remove fixed width label styles */
+     /* width: 130px; text-align: right; margin-right: 10px; flex-shrink: 0; */
+}
+
+.form-group select,
+.form-group input[type="text"] {
+    width: 100%; /* Make inputs/selects fill width */
+    padding: 8px; /* Re-add padding */
+    border: 1px solid #ccc; /* Re-add border */
+    border-radius: 4px; /* Re-add border-radius */
+    box-sizing: border-box; /* Include padding in width */
+    /* flex-grow: 1; Remove flex setting */
+}
+
+/* Endpoint description below selects */
+.endpoint-description {
+    width: 100%; /* Full width of left column */
+    margin-top: 5px;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    color: #333;
+    font-style: italic;
+    text-align: left;
+    min-height: 0; /* Remove min-height */
+}
+
+/* Description text below inputs */
+.description-text {
+    width: 100%; /* Full width of right column */
+    margin-left: 0; /* Remove indent */
+    margin-top: -5px; /* Adjust spacing */
+    margin-bottom: 10px;
+    font-size: 0.85em;
+    color: #666;
+    text-align: left;
+    display: block;
+}
+
+/* Helper text */
+.helper-text {
+     width: 100%; /* Full width of right column */
+     text-align: left;
+     margin-left: 0;
+}
+
+/* Center the button */
+.button-container {
+   width: 100%;
+   display: flex;
+   justify-content: center;
+   margin-top: 10px; /* Add some space above button */
+}
+
+/* Response Area Styling */
+h2 {
+    text-align: center;
+    width: 100%;
+    margin-top: 30px;
+}
+
+pre {
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin: 10px auto 0 auto; /* Center pre */
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    width: 90%; /* Maybe make it wider */
+    max-width: 800px; /* Reducing max width for better readability */
+    min-height: 100px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Class to hide elements */
+.hidden {
+    display: none;
+}
+
+/* Ensure button styles are retained */
+button {
+    padding: 8px 15px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+#visualContainer {
+    width: 90%;
+    max-width: 800px; /* Reducing max width for better readability */
+    margin: 20px auto;
+}
+
+/* Basic Table Styles */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 0.9em;
+    box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+    table-layout: fixed; /* Ensure columns respect width settings */
+}
+
+.data-table th, .data-table td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+    word-break: break-all; /* Allow long strings (addresses) to wrap */
+}
+
+.data-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Summary Card */
+.summary-card {
+    background-color: #e7f3ff;
+    border-left: 4px solid #2196F3;
+    padding: 10px 15px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    font-size: 0.95em;
+}
+
+/* Token Metadata Card Styles */
+.token-metadata-card {
+    background-color: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* More professional font */
+}
+
+.token-metadata-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    font-size: 1.3em;
+}
+
+.token-metadata-card h4 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #555;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.metadata-row {
+    margin-bottom: 8px;
+    line-height: 1.6;
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+
+.metadata-label {
+    font-weight: 600;
+    color: #444;
+    min-width: 150px; /* Adjust as needed */
+    padding-right: 10px;
+}
+
+.metadata-value {
+    color: #666;
+    word-break: break-all; /* Prevent long addresses/numbers from overflowing */
+}
+
+.data-table .summary-box{
+    margin-bottom:10px;
+    font-size:0.9em;
+    font-weight:bold;
+}
+.chart-wrapper {
+    width: 100%;
+    height: 400px;
+    margin-bottom: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .controls-container {
+        flex-direction: column;
+        gap: 15px;
+        width: 95%;
+    }
+    
+    pre {
+        width: 95%;
+    }
+    
+    body {
+        padding: 10px;
+    }
+    
+    .data-table {
+        font-size: 0.8em;
+    }
+    
+    .data-table th, .data-table td {
+        padding: 6px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .intro-section {
+        width: 100%;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    body {
+        padding: 8px;
+    }
+} 
