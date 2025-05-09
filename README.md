@@ -2,22 +2,39 @@
 
 This repository contains links to example code for products built on The Graph. Each folder under this directory represents a separate example or demo showcasing various features and use-cases.
 
+For more information, visit [www.thegraph.com/docs](https://www.thegraph.com/docs)
+
 ## Contents
+
+-   **subgraphs/**
+    -   **basic-examples/**
+        -   [**init-subgraph**](./subgraphs/basic-examples/init-subgraph): "Hello world" starter generated via `graph init`; ideal for first-time users wanting to see the file layout and deploy something fast.
+        -   [**arweave-blocks-transactions**](./subgraphs/basic-examples/arweave-blocks-transactions): Indexes Arweave blocks, transactions, tags and proofs-of-access; includes sample GraphQL queries for time-bounded block ranges.
+        -   [**near-blocks-example**](./subgraphs/basic-examples/near/blocks-example): Simplest NEAR template indexing the chain's blocks to illustrate NEAR manifest syntax and block handlers.
+        -   [**near-receipts-example**](./subgraphs/basic-examples/near/receipts-example): Indexes receipts from `app.good-morning.near`, showing how to build NEAR receipt-based entities.
+        -   [**cosmos-block-filtering**](./subgraphs/basic-examples/cosmos/block-filtering): Cosmos Hub-compatible subgraph that captures every block header; scripts let you regenerate manifests for any Cosmos-SDK chain.
+        -   [**cosmos-validator-rewards**](./subgraphs/basic-examples/cosmos/validator-rewards): Tracks validator reward events on Cosmos chains, building per-validator reward histories.
+        -   [**cosmos-validator-delegations**](./subgraphs/basic-examples/cosmos/validator-delegations): Captures delegation messages, mapping delegator → validator and amounts—good reference for message decoding in Cosmos.
+        -   [**cosmos-osmosis-token-swaps**](./subgraphs/basic-examples/cosmos/osmosis-token-swaps): Watches GAMM swap events on Osmosis to build a history of token swaps for any account.
+        -   [**query-examples**](./subgraphs/basic-examples/query-examples): Cookbook showing how to query The Graph from many frameworks (React, Next.js, Vue, Svelte, Python, Go, CLI, etc.) using an API key and best-practice query patterns.
+    -   **features/**
+        -   [**blocks**](./subgraphs/features/blocks): Cross-network template that indexes block metadata (number, timestamp, etc.), letting you query blocks by number or time on any supported chain.
+        -   [**composable-subgraph**](./subgraphs/features/composable-subgraph): Minimal demo of The Graph's subgraph composition feature where a composed subgraph consumes entities from three smaller block subgraphs for modular, reusable data pipelines.
+        -   [**timeseries-and-aggregations-1**](./subgraphs/features/timeseries-and-aggregations-1): Lightweight sandbox that focuses purely on the mechanics of custom timeseries aggregations using predictable block numbers—perfect for learning aggregation syntax.
+        -   [**timeseries-and-aggregations-2**](./subgraphs/features/timeseries-and-aggregations-2): Example demonstrating timeseries and aggregations with The Graph, using CryptoPunks events (transfers, bids, sales) to showcase data aggregation over time. Includes a video walkthrough.
+    -   **full-stack-examples/**
+        -   [**full-stack-dapp**](./subgraphs/full-stack-examples/full-stack-dapp): A workshop and template for full-stack dapp development using Scaffold-ETH 2 and The Graph. Covers environment setup, smart-contract deployment, subgraph creation, and frontend integration. Includes a video replay.
+        -   [**hackathon-react-apollo-app**](./subgraphs/full-stack-examples/hackathon-react-apollo-app): React + Apollo + Material-UI hackathon starter that shows how to wire a subgraph endpoint into a modern UI component stack.
+        -   [**eth-denver-dapp**](./subgraphs/full-stack-examples/eth-denver-dapp): Step-by-step workshop repo from ETHDenver that spins up Ganache, a local Graph Node, deploys an example subgraph and connects it to a React front-end.
+    -   **examples-with-workshops/**
+        -   [**subgraph-beginner-development-workshop**](./subgraphs/examples-with-workshops/subgraph-beginner-development): Hands-on workshop (video + slides) that walks through building a CryptoPunks starter subgraph, extending entities, and writing advanced queries—ideal for new subgraph devs.
+        -   [**file-data-sources**](./subgraphs/examples-with-workshops/file-data-sources): Workshop on using File Data Sources in subgraphs, including a fully functional example subgraph that implements File Data Sources and Full-Text Search, using the Beanz NFT collection as a case study. Includes slides.
+        -   [**query-the-graph**](./subgraphs/examples-with-workshops/query-the-graph): Workshop on querying subgraphs. Covers creating API keys, sending demo queries, and methods for querying using Vanilla JS, Python (Flask), graph-client, and React Apollo. Includes slides.
 
 -   **token-api/**
     -   [**token-api-quickstart**](./token-api/token-api-quickstart): Provides examples for integrating The Graph's Token API directly via React and through Cursor MCP. Covers token balances, transfers, and multi-chain support.
     -   [**token-api-scaffold-eth**](./token-api/token-api-scaffold-eth): Demonstrates integrating The Graph's Token API with Scaffold ETH to accelerate development of full-stack decentralized applications.
     -   [**token-api-tax-demo**](./token-api/token-api-tax-demo): Shows how to pull wallet balances, historical inventory, transfers, and price data from The Graph Token API for tax and accounting, using a lightweight HTML, CSS, JavaScript, and Express proxy.
-
--   **subgraphs/**
-    -   **feature-examples/**
-        -   [**subgraph-timeseries-and-aggregations**](./subgraphs/feature-examples/subgraph-timeseries-and-aggregations): Example demonstrating timeseries and aggregations with The Graph, using CryptoPunks events (transfers, bids, sales) to showcase data aggregation over time. Includes a video walkthrough.
-    -   **full-stack-examples/**
-        -   [**subgraph-full-stack-dapp**](./subgraphs/full-stack-examples/subgraph-full-stack-dapp): A workshop and template for full-stack dapp development using Scaffold-ETH 2 and The Graph. Covers setting up the environment, smart contract deployment, subgraph creation, and frontend integration. Includes a video replay.
-    -   **workshops/**
-        -   [**subgraph-development-workshop**](./subgraphs/workshops/subgraph-development-workshop): Workshop material for subgraph development and querying. Covers deploying a starter subgraph, understanding key files (manifest, mappings, schema), comparing with a published CryptoPunks subgraph, and extending entities. Includes video and slides.
-        -   [**subgraph-file-data-sources-workshop**](./subgraphs/workshops/subgraph-file-data-sources-workshop): Workshop on using File Data Sources in subgraphs, including a fully functional example subgraph that implements File Data Sources and Full Text Search, using the Beanz NFT collection as a case study. Includes slides.
-        -   [**subgraph-query-the-graph-workshop**](./subgraphs/workshops/subgraph-query-the-graph-workshop): Workshop on querying subgraphs. Covers creating API keys, sending demo queries, and methods for querying using Vanilla JS, Python (Flask), graph-client, and React Apollo. Includes slides.
 
 ## License
 
