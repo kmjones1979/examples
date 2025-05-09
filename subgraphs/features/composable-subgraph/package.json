@@ -1,0 +1,13 @@
+{
+  "name": "subgraph-composition-example",
+  "private": true,
+  "scripts": {
+    "codegen": "pnpm -r run codegen",
+    "build": "pnpm -r run build",
+    "deploy-local": "pnpm -r run deploy-local"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "0.95.0",
+    "@graphprotocol/graph-ts": "0.37.0"
+  }
+} 

@@ -1,0 +1,104 @@
+# Subgraph composition is supported as of 1.3.0 spec version.
+specVersion: 1.3.0
+description: A subgraph that collects statistics about blocks.
+schema:
+  file: ./schema.graphql
+indexerHints:
+  prune: auto
+
+# There is no hard limit on how many source subgraphs can be used in a composed subgraph,
+# but there may be a performance penalty when using many source subgraphs.
+dataSources:
+  - kind: subgraph
+    name: block-time-subgraph
+
+    # All source subgraphs must be on the same network.
+    network: mainnet
+
+    source:
+      # The deployment ID of the source subgraph.
+      #
+      # Any change to the source subgraph will generate a new deployment ID,
+      # and the address should be updated to reflect the changes.
+      address: "QmYDoyoDpMKu7kqpNw3Fb7293u55MP89vgNFMT9nMdX2iN"
+
+      # The same start block as in the source subgraph.
+      startBlock: 10000000
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mapping.ts
+
+      # Entities list is not used.
+      entities: []
+
+      # ABIs list is not required if not used.
+      abis: []
+
+      handlers:
+        - # The entity from the source subgraph.
+          # It will be validated, and it's type will be downloaded when codegen runs.
+          entity: BlockTime
+          handler: handleBlockTime
+  - kind: subgraph
+    name: block-cost-subgraph
+
+    # All source subgraphs must be on the same network.
+    network: mainnet
+
+    source:
+      # The deployment ID of the source subgraph.
+      #
+      # Any change to the source subgraph will generate a new deployment ID,
+      # and the address should be updated to reflect the changes.
+      address: "Qmb4GGhWYVxj1146y9LCPaHtL9oD8gfvdksBnVZ4UoTmGd"
+
+      # The same start block as in the source subgraph.
+      startBlock: 10000000
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mapping.ts
+
+      # Entities list is not used.
+      entities: []
+
+      # ABIs list is not required if not used.
+      abis: []
+
+      handlers:
+        - # The entity from the source subgraph.
+          # It will be validated, and it's type will be downloaded when codegen runs.
+          entity: BlockCost
+          handler: handleBlockCost
+  - kind: subgraph
+    name: block-size-subgraph
+
+    # All source subgraphs must be on the same network.
+    network: mainnet
+
+    source:
+      # The deployment ID of the source subgraph.
+      #
+      # Any change to the source subgraph will generate a new deployment ID,
+      # and the address should be updated to reflect the changes.
+      address: "QmVg4x7wFYAuUaeCrN9FdY4NUk7QpcvpgvBiqyNvZr3xjN"
+
+      # The same start block as in the source subgraph.
+      startBlock: 10000000
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mapping.ts
+
+      # Entities list is not used.
+      entities: []
+
+      # ABIs list is not required if not used.
+      abis: []
+
+      handlers:
+        - # The entity from the source subgraph.
+          # It will be validated, and it's type will be downloaded when codegen runs.
+          entity: BlockSize
+          handler: handleBlockSize

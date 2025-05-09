@@ -1,0 +1,11 @@
+{
+  "name": "block-cost-subgraph",
+  "license": "MIT",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "create-local": "graph create --node http://localhost:8020/ block-cost-subgraph",
+    "remove-local": "graph remove --node http://localhost:8020/ block-cost-subgraph",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 block-cost-subgraph"
+  }
+}

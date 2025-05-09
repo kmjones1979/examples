@@ -1,0 +1,7 @@
+type BlockTime @entity(immutable: true) {
+    id: ID!
+    parentId: ID!
+    number: BigInt!
+    timestamp: BigInt!
+    blockTime: BigInt!
+}

@@ -1,0 +1,34 @@
+# Subgraph composition is supported as of 1.3.0 spec version.
+specVersion: 1.3.0
+description: A subgraph that indexes the cost of each block.
+schema:
+  file: ./schema.graphql
+indexerHints:
+  prune: auto
+dataSources:
+  - kind: ethereum
+    name: BlockDataSource
+    network: mainnet
+    source:
+      # We are only using block data in the example, so an empty contract address is fine.
+      address: "0x0000000000000000000000000000000000000000"
+
+      # The same is true for ABI, an empty event is provided.
+      abi: BlockDataSource
+
+      # Randomly selected at a point of high activity on the network.
+      startBlock: 10000000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - BlockCost
+
+      # We are only using block data in the example, so an empty event is fine.
+      abis:
+        - name: BlockDataSource
+          file: ./abis/BlockDataSource.json
+      blockHandlers:
+        - handler: handleBlock
+      file: ./src/mapping.ts

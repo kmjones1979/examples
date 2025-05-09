@@ -1,0 +1,11 @@
+{
+  "name": "block-time-subgraph",
+  "license": "MIT",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "create-local": "graph create --node http://localhost:8020/ block-time-subgraph",
+    "remove-local": "graph remove --node http://localhost:8020/ block-time-subgraph",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 block-time-subgraph"
+  }
+}

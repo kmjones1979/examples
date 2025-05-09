@@ -1,0 +1,83 @@
+# This type is used to collect data from multiple source subgraphs
+# before saving the final immutable data for aggregation.
+#
+# Each trigger will partially fill the block data.
+type BlockDataSource @entity {
+    id: ID!
+    number: BigInt!
+    blockTime: BigInt
+    gasUsed: BigInt
+    size: BigInt
+}
+
+# The immutable data used as the source for aggregation.
+type Block @entity(timeseries: true) {
+    # This field is required and will be filled in automatically.
+    id: Int8!
+
+    # This field is required and will be filled in automatically.
+    timestamp: Timestamp!
+
+    hash: Bytes!
+    number: BigInt!
+    blockTime: BigInt!
+    gasUsed: BigInt!
+    size: BigInt!
+}
+
+# This type defines our aggregation on the immutable block data.
+# Aggregation buckets are created automatically, and there is no need to define anything in the mappings.
+#
+# There is no hard limit on the number of aggregates an aggregation type can have,
+# but there may be a performance penalty if too many aggregates are created.
+type Stats @aggregation(intervals: ["hour", "day"], source: "Block") {
+    # This field is required.
+    id: Int8!
+
+    # This field is required.
+    timestamp: Timestamp!
+
+    # The total number of source values used in an aggregation bucket.
+    count: Int! @aggregate(fn: "count")
+
+    # By default, each aggregate starts at 0 for each new bucket.
+    # Therefore, it only aggregates over the time interval for the bucket.
+    minBlockTime: BigInt! @aggregate(fn: "min", arg: "blockTime")
+    maxBlockTime: BigInt! @aggregate(fn: "max", arg: "blockTime")
+    sumBlockTime: BigInt! @aggregate(fn: "sum", arg: "blockTime")
+    firstBlockTime: BigInt! @aggregate(fn: "first", arg: "blockTime")
+    lastBlockTime: BigInt! @aggregate(fn: "last", arg: "blockTime")
+
+    # Cumulative aggregations will aggregate over the entire time series
+    # up to the end of the time interval for the bucket.
+    allTimeMinBlockTime: BigInt! @aggregate(fn: "min", arg: "blockTime", cumulative: true)
+    allTimeMaxBlockTime: BigInt! @aggregate(fn: "max", arg: "blockTime", cumulative: true)
+
+    # By default, each aggregate starts at 0 for each new bucket.
+    # Therefore, it only aggregates over the time interval for the bucket.
+    minGasUsed: BigInt! @aggregate(fn: "min", arg: "gasUsed")
+    maxGasUsed: BigInt! @aggregate(fn: "max", arg: "gasUsed")
+    sumGasUsed: BigInt! @aggregate(fn: "sum", arg: "gasUsed")
+    firstGasUsed: BigInt! @aggregate(fn: "first", arg: "gasUsed")
+    lastGasUsed: BigInt! @aggregate(fn: "last", arg: "gasUsed")
+
+    # Cumulative aggregations will aggregate over the entire time series
+    # up to the end of the time interval for the bucket.
+    totalGasUsed: BigInt! @aggregate(fn: "sum", arg: "gasUsed", cumulative: true)
+    allTimeMinGasUsed: BigInt! @aggregate(fn: "min", arg: "gasUsed", cumulative: true)
+    allTimeMaxGasUsed: BigInt! @aggregate(fn: "max", arg: "gasUsed", cumulative: true)
+
+    # By default, each aggregate starts at 0 for each new bucket.
+    # Therefore, it only aggregates over the time interval for the bucket.
+    minSize: BigInt! @aggregate(fn: "min", arg: "size")
+    maxSize: BigInt! @aggregate(fn: "max", arg: "size")
+    sumSize: BigInt! @aggregate(fn: "sum", arg: "size")
+    firstSize: BigInt! @aggregate(fn: "first", arg: "size")
+    lastSize: BigInt! @aggregate(fn: "last", arg: "size")
+
+    # Cumulative aggregations will aggregate over the entire time series
+    # up to the end of the time interval for the bucket.
+    totalSize: BigInt! @aggregate(fn: "sum", arg: "size", cumulative: true)
+    allTimeMinSize: BigInt! @aggregate(fn: "min", arg: "size", cumulative: true)
+    allTimeMaxSize: BigInt! @aggregate(fn: "max", arg: "size", cumulative: true)
+}

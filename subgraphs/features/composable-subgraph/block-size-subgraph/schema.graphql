@@ -1,0 +1,5 @@
+type BlockSize @entity(immutable: true) {
+    id: ID!
+    number: BigInt!
+    size: BigInt!
+}
