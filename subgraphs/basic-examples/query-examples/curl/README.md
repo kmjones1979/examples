@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # The Graph Query Examples | cURL
 
 Checkout the [query script](./query.sh) that queries Subgraphs on The Graph Network Arbitrum Subgraph published on The Graph Network.

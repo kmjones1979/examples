@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Block Cost Subgraph
 
 This is a subgraph that indexes the cost of each block.

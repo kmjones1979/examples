@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # @graphprotocol/query-examples-nodejs-cli
 
 Checkout the [cli script](./src/index.ts) that allows you to pass in a query that will be ran on the Subgraph denoted by the `subgraphClient` variable that initializes a `GraphQLClient` for the Subgraph. The default is the arbitrum network Subgraph.

@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Block Size Subgraph
 
 This is a subgraph that indexes the size of each block.

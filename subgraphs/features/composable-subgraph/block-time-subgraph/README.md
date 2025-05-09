@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Block Time Subgraph
 
 This is a subgraph that calculates the block time for each block.
