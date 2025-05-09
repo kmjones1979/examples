@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # The Graph Query Examples | Python CLI
 
 Checkout the [cli script](./subgraph_cli.py) that allows you to pass in a query that will be ran on the Subgraph denoted by the `subgraph_url` variable. The default is the arbitrum network subgraph.

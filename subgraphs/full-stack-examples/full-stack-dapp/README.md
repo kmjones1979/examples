@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 > **Last updated:** 2025-05-09
 
 # 🧙🏻‍♂️ An Introduction to Full Stack dapp Development 💻

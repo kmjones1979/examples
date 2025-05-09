@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Block Stats Subgraph
 
 This is a composed subgraph that combines and aggregates the information from the 3 source subgraphs.
