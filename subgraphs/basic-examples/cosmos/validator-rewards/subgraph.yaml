@@ -1,6 +1,6 @@
-specVersion: 0.0.5
+specVersion: 1.3.0
 description: Validator Rewards Example
-repository: https://github.com/graphprotocol/example-subgraphs
+repository: https://www.github.com/graphprotocol/examples/tree/main/subgraphs/basic-examples/cosmos/validator-rewards
 schema:
   file: ./schema.graphql
 dataSources:

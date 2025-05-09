@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Block Filtering Example
 
 This example subgraph stores `Block` objects that represent blocks appended to a Cosmos chain. It's a very simple implementation where just the block number and the block timestamp is saved to the store.

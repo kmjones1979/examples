@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "update:dates": "node scripts/update-readme-dates.js"
+  }
+} 

@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Validator Rewards Example
 
 This example subgraph stores `Reward` objects that represent rewards received by a validator in a Cosmos chain. In order to do that, an event handler is used to filter [reward](https://github.com/cosmos/cosmos-sdk/blob/13378bd2cfb9695da6477494e449b0a3bca9bc94/x/distribution/spec/06_events.md) events. The type of event to be filtered is specified in the subgraph manifest file. That way, the handler will just receive events of that type.

@@ -1,6 +1,7 @@
 # Subgraph composition is supported as of 1.3.0 spec version.
 specVersion: 1.3.0
-description: A subgraph that collects statistics about blocks.
+repository: https://www.github.com/graphprotocol/examples/tree/main/subgraphs/features/composable-subgraph/block-stats-subgraph
+# description: Block Stats Subgraph (Composed) for Composition Example
 schema:
   file: ./schema.graphql
 indexerHints:

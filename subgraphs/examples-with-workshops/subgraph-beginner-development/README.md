@@ -1,6 +1,6 @@
-# Subgraph Development and Querying Workshop
+> **Last updated:** GIT_WILL_REPLACE_THIS
 
-Built by [Marcus Rein](https://www.twitter.com/Marcus_Rein_)
+# Subgraph Development and Querying Workshop
 
 ## [Video presentation of this workshop](https://www.youtube.com/watch?v=7J1lt2Ao3s0)
 

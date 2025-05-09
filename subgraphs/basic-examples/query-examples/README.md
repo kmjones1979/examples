@@ -1,8 +1,6 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # The Graph Protocol - Query Examples
-
-Built by [Chris Whited](https://x.com/cmwhited)
-
-Last updated March 2025
 
 Provides examples on how to query Subgraphs published to [The Graph Network](https://thegraph.com/) using API Keys.
 

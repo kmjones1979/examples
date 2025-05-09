@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Arweave Blocks and Transactions Example
 This subgraph is indexing blocks, transactions, tags, and POAs. Make sure to replace the `owner` field inside the .yaml file with the owner id.
 

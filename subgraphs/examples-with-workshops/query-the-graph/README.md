@@ -1,6 +1,6 @@
-# Subgraph Query Workshop
+> **Last updated:** GIT_WILL_REPLACE_THIS
 
-Built by [Marcus Rein](https://www.twitter.com/Marcus_Rein_)
+# Subgraph Query Workshop
 
 ## [Workshop Slides](https://docs.google.com/presentation/d/1U64NOtOCXJEi9J3jmM0DhpuozgZg-eXoGE8KCZ2cczQ/edit?usp=sharing)
 

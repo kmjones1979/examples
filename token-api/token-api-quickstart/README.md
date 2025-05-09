@@ -1,6 +1,6 @@
-# TokenAPI Quickstart Project
+> **Last updated:** GIT_WILL_REPLACE_THIS
 
-Built by [Marcus Rein](https://www.twitter.com/Marcus_Rein_)
+# TokenAPI Quickstart Project
 
 This repository provides examples for integrating The Graph's Token API into your application as well as MCP integration with Cursor IDE. 
 

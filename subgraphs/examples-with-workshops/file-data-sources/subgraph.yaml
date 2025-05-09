@@ -1,4 +1,5 @@
-specVersion: 0.0.4
+specVersion: 1.3.0
+repository: https://www.github.com/graphprotocol/examples/tree/main/subgraphs/examples-with-workshops/file-data-sources
 schema:
     file: ./schema.graphql
 dataSources:

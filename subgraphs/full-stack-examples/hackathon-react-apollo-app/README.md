@@ -1,8 +1,6 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Hackathon React Apollo Example
-
-Built by [Nena Djaja](https://github.com/nenadjaja)
-
-Last updated 2018
 
 This is an example UI app for the hackathon. It uses [React](https://reactjs.org/), [Apollo](https://www.apollographql.com/docs/react/) and [MaterialUI](https://material-ui.com/) libraries.
 

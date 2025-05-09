@@ -1,6 +1,4 @@
-Built by [David Lutterkort](https://github.com/lutter)
-
-Last updated 2024
+> **Last updated:** GIT_WILL_REPLACE_THIS
 
 This subgraph demonstrates aggregations by aggregating over some easily
 predictable values, namely the block numbers of the underlying chain. It's

@@ -1,6 +1,6 @@
-# 🧙🏻‍♂️ An Introduction to Full Stack dapp Development 💻
+> **Last updated:** GIT_WILL_REPLACE_THIS
 
-Built by [Kevin Jones](https://www.twitter.com/cryptomastery_)
+# 🧙🏻‍♂️ An Introduction to Full Stack dapp Development 💻
 
 This workshop is built around Scaffold-ETH 2 and The Graph. You will learn how to:
 

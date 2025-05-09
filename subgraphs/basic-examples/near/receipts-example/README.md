@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Example NEAR Receipts Subgraph: Good Morning NEAR
 
 This subgraph indexes `app.good-morning.near`, which you can interact with at https://gm-near.surge.sh/

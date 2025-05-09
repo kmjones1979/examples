@@ -1,4 +1,5 @@
-specVersion: 1.1.0
+specVersion: 1.3.0
+repository: https://www.github.com/graphprotocol/examples/tree/main/subgraphs/features/timeseries-and-aggregations-2
 indexerHints:
   prune: auto
 schema:

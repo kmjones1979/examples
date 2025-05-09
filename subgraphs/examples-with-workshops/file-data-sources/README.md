@@ -1,6 +1,6 @@
-# File Data Sources Workshop 
+> **Last updated:** GIT_WILL_REPLACE_THIS
 
-Built by [Marcus Rein](https://www.twitter.com/Marcus_Rein_)
+# File Data Sources Workshop
 
 ### [Workshop Slides](https://docs.google.com/presentation/d/11CKH20u1VC1SAAAyJY2uvaXnBFbDqlwEcBfhI3KbtKY/edit?usp=sharing)
 

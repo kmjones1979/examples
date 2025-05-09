@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Subgraph Composition Example
 
 Built by [Krishnanand VP](https://github.com/incrypto32)

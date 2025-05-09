@@ -1,8 +1,6 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 ## Getting started
-
-Built by [Nena Djaja](https://github.com/nenadjaja)
-
-Last updated 2019
 
 ### Local Development
 

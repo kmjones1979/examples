@@ -1,0 +1,36 @@
+name: Update README dates
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  refresh-dates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need full history for git log
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run updater
+        run: |
+          npm run update:dates || true
+
+      - name: Commit and push if README changed
+        run: |
+          if git diff --quiet; then
+            echo "README up to date"
+          else
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -am "chore: auto-update README last-updated dates"
+            git push
+          fi
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' 

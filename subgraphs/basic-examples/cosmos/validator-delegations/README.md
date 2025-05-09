@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Validator Delegations Example
 
 This example subgraph stores `Delegation` objects that represent delegations being made in a Cosmos chain. In order to do that, the handler function checks all messages within the transaction and filters them in order to decode and save just the ones that represent a delegation in the chain.

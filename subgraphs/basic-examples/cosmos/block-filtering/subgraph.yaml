@@ -1,6 +1,6 @@
-specVersion: 0.0.5
+specVersion: 1.3.0
 description: Block Filtering Example
-repository: https://github.com/graphprotocol/example-subgraphs
+repository: https://www.github.com/graphprotocol/examples/tree/main/subgraphs/basic-examples/cosmos/block-filtering
 schema:
   file: ./schema.graphql
 dataSources:

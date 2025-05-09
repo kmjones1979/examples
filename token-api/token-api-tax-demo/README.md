@@ -1,6 +1,6 @@
-# The Graph Token API — Taxes & Accounting Usecase
+> **Last updated:** GIT_WILL_REPLACE_THIS
 
-Built by [Marcus Rein](https://www.twitter.com/Marcus_Rein_)
+# The Graph Token API — Taxes & Accounting Usecase
 
 Token API Docs: https://thegraph.com/docs/en/token-api/quick-start/
 

@@ -1,6 +1,8 @@
-specVersion: 0.0.5
+specVersion: 1.3.0
+# repository: https://github.com/graphprotocol/example-subgraph
+repository: https://www.github.com/graphprotocol/examples/tree/main/subgraphs/features/blocks
+# description: Gravatar for Ethereum
 description: Information about Ethereum Mainnet Blocks
-repository: https://github.com/graphprotocol/common-subgraphs/blocks/ethereum
 schema:
   file: ./schema.graphql
 dataSources:

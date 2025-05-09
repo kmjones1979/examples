@@ -1,3 +1,5 @@
+> **Last updated:** GIT_WILL_REPLACE_THIS
+
 # Block information subgraphs
 
 Built by [David Lutterkort](https://github.com/lutter)
