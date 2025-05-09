@@ -37,8 +37,19 @@ const updatedMainReadmeLines = mainReadmeLines.map((line) => {
   const match = line.match(/\]\((\.\/[^)]+)\):(.+)/);
   if (!match) return line;
 
-  const mdPath = match[1]; // e.g., ./subgraphs/basic-examples/near/blocks-example
+  const mdPath = match[1];
   const description = match[2];
+
+  // Does the description already have a real date? If yes, leave untouched unless it contains PLACEHOLDER
+  const hasSuffix = /\(last updated [^)]+\)/i.test(description);
+  const hasPlaceholder = /\(last updated PLACEHOLDER\)/i.test(description);
+
+  if (hasSuffix && !hasPlaceholder) {
+    // keep existing date
+    return line;
+  }
+
+  // Strip any existing suffix (including placeholder)
   const descClean = description.replace(/\s*\(last updated .*?\)/i, '').trimEnd();
 
   const lastDate = gitLastChanged(mdPath.startsWith('./') ? mdPath.substring(2) : mdPath);
@@ -87,8 +98,12 @@ for (const subReadmePath of subReadmeFiles) {
   let modified = false;
   const updatedSubReadmeLines = subReadmeLines.map((line) => {
     if (line.startsWith('> **Last updated:**')) {
-      modified = true;
-      return `> **Last updated:** ${lastDate}`;
+      if (line.includes('GIT_WILL_REPLACE_THIS')) {
+        modified = true;
+        return `> **Last updated:** ${lastDate}`;
+      }
+      // if line already has real date, leave unchanged
+      return line;
     }
     return line;
   });
@@ -97,7 +112,10 @@ for (const subReadmePath of subReadmeFiles) {
     fs.writeFileSync(subReadmePath, updatedSubReadmeLines.join('\n'));
     console.log(`  Updated date in ${subReadmePath}`);
   } else {
-    console.log(`  Placeholder '> **Last updated:**' not found in ${subReadmePath}. No update made.`);
+    // Insert placeholder at the top of the README so future runs will replace it
+    const newContent = ['> **Last updated:** GIT_WILL_REPLACE_THIS', '', ...subReadmeLines].join('\n');
+    fs.writeFileSync(subReadmePath, newContent);
+    console.log(`  Inserted placeholder into ${subReadmePath}`);
   }
 }
 
