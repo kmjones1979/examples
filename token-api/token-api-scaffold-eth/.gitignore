@@ -1,0 +1,87 @@
+# dependencies
+node_modules/
+
+# yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# npm
+package-lock.json
+npm-debug.log*
+
+# pnpm
+pnpm-lock.yaml
+
+# eslint
+.eslintcache
+
+# misc
+.DS_Store
+*.log
+*.tmp
+*.swp
+
+# IDE
+.vscode/
+.idea/
+
+# cli
+/dist/
+
+# build output
+build/
+out/
+.next/
+coverage/
+
+# environment & secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.secret*
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+*.cert
+secrets.json
+
+# large files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.gz
+*.bz2
+*.xz
+*.tgz
+*.mp4
+*.mp3
+*.mov
+*.avi
+*.mkv
+*.flac
+*.wav
+*.webm
+*.ogg
+*.iso
+*.img
+*.exe
+*.dll
+*.bin
+*.apk
+*.dmg
+*.msi
+*.pkg
+
+# OS generated files
+Thumbs.db
+Desktop.ini
