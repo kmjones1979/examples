@@ -1,10 +1,4 @@
-> **Last updated:** 2025-05-12
-
-> **Last updated:** 2025-05-09
-
-> **Last updated:** 2025-05-09
-
-> **Last updated:** 2025-05-09
+> **Last updated:** June 2022
 
 # Arweave Blocks and Transactions Example
 This subgraph is indexing blocks, transactions, tags, and POAs. Make sure to replace the `owner` field inside the .yaml file with the owner id.

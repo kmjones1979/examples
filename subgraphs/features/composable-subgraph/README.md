@@ -1,10 +1,4 @@
-> **Last updated:** 2025-05-12
-
-> **Last updated:** 2025-05-09
-
-> **Last updated:** 2025-05-09
-
-> **Last updated:** 2025-05-09
+> **Last updated:** March 2025
 
 # Subgraph Composition Example
 

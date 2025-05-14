@@ -1,4 +1,4 @@
-> **Last updated:** 2025-05-12
+> **Last updated:** May 2025
 
 > **Last updated:** 2025-05-09
 

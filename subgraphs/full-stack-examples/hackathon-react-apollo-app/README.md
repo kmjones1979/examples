@@ -1,10 +1,4 @@
-> **Last updated:** 2025-05-12
-
-> **Last updated:** 2025-05-09
-
-> **Last updated:** 2025-05-09
-
-> **Last updated:** 2025-05-09
+> **Last updated:** 2018-03-22
 
 # Hackathon React Apollo Example
 
