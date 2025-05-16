@@ -61,8 +61,8 @@ To build the test page step-by-step yourself, follow the [Test Page Workshop](WO
 
 ```bash
 # Clone the repository
-git clone https://github.com/kmjones1979/se2-graph-token-api
-cd se2-graph-token-api
+git clone https://github.com/graphprotocol/examples.git
+cd examples/token-api/token-api-scaffold-eth
 
 # Install dependencies
 yarn install
