@@ -10,7 +10,7 @@ import { Address, AddressInput } from "~~/components/scaffold-eth";
 // Combined type to handle both API response formats
 type CombinedTransfer = TokenTransferItem | TokenTransfer;
 
-export const GetTransfers = ({ isOpen = true }: { isOpen?: boolean }) => {
+export const GetTransfers = ({ isOpen = false }: { isOpen?: boolean }) => {
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkId>("mainnet");
   const [transfers, setTransfers] = useState<CombinedTransfer[]>([]);

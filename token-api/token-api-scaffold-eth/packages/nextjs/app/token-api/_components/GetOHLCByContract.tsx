@@ -20,7 +20,7 @@ interface OHLCDataExtended extends Partial<OHLCDataPoint> {
   pair?: string;
 }
 
-export const GetOHLCByContract = ({ isOpen = true }: { isOpen?: boolean }) => {
+export const GetOHLCByContract = ({ isOpen = false }: { isOpen?: boolean }) => {
   // State for search parameters
   const [contractAddress, setContractAddress] = useState<string>("");
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkId>("mainnet");

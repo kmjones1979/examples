@@ -41,7 +41,7 @@ interface ApiResponse {
   total_results?: number;
 }
 
-export const GetHistorical = ({ isOpen = true }: { isOpen?: boolean }) => {
+export const GetHistorical = ({ isOpen = false }: { isOpen?: boolean }) => {
   // State for search parameters
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkId>("mainnet");

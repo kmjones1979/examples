@@ -57,7 +57,7 @@ const estimateDateFromBlock = (blockNum: number | undefined, networkId: string):
   return estimatedDate > now ? now : estimatedDate;
 };
 
-export const GetHolders = ({ isOpen = true }: { isOpen?: boolean }) => {
+export const GetHolders = ({ isOpen = false }: { isOpen?: boolean }) => {
   const [contractAddress, setContractAddress] = useState<string>("");
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkId>("mainnet");
   const [holders, setHolders] = useState<HolderItem[]>([]);

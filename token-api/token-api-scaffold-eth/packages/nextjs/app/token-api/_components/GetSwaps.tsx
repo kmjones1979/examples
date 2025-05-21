@@ -7,7 +7,7 @@ import { NetworkId } from "~~/app/token-api/_hooks/useTokenApi";
 import { Swap, SwapsParams, useTokenSwaps } from "~~/app/token-api/_hooks/useTokenSwaps";
 import { Address, AddressInput } from "~~/components/scaffold-eth";
 
-export const GetSwaps = ({ isOpen = true }: { isOpen?: boolean }) => {
+export const GetSwaps = ({ isOpen = false }: { isOpen?: boolean }) => {
   // State for search parameters
   const [poolAddress, setPoolAddress] = useState<string>("");
   const [callerAddress, setCallerAddress] = useState<string>("");
