@@ -62,7 +62,7 @@ To build the test page step-by-step yourself, follow the [Test Page Workshop](WO
 ```bash
 # Clone the repository
 git clone https://github.com/graphprotocol/examples.git
-cd cd examples/token-api/token-api-scaffold-eth
+cd examples/token-api/token-api-scaffold-eth
 
 # Install dependencies
 yarn install

@@ -1,8 +1,4 @@
-> **Last updated:** 2025-05-09
-
-> **Last updated:** 2025-05-09
-
-> **Last updated:** 2025-05-09
+> **Last updated:** Feb 2025
 
 # CryptoPunks Timeseries and Aggregations Example Repo
 

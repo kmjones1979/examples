@@ -1,4 +1,4 @@
-> **Last updated:** GIT_WILL_REPLACE_THIS
+> **Last updated:** May 2025
 
 # The Graph Token API — Taxes & Accounting Usecase
 

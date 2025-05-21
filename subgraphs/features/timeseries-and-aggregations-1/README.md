@@ -1,8 +1,4 @@
-> **Last updated:** 2025-05-09
-
-> **Last updated:** 2025-05-09
-
-> **Last updated:** 2025-05-09
+> **Last updated:** Feb 2025
 
 This subgraph demonstrates aggregations by aggregating over some easily
 predictable values, namely the block numbers of the underlying chain. It's
