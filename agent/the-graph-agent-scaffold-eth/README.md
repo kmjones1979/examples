@@ -66,7 +66,7 @@ Before you begin, you need to install the following tools:
 
 ```bash
 git clone https://github.com/graphprotocol/examples.git
-cd cd agent/the-graph-agent-scaffold-eth
+cd agent/the-graph-agent-scaffold-eth
 ```
 
 2. Install dependencies:
