@@ -4,43 +4,43 @@ A comprehensive SDK for interacting with The Graph Token API built on Scaffold-E
 
 ## Table of Contents
 
--   [Overview](#overview)
--   [Installation](#installation)
--   [API Configuration](#api-configuration)
-    -   [Environment Setup](#environment-setup)
-    -   [Next.js API Route Implementation](#nextjs-api-route-implementation)
-    -   [Authentication Flow](#authentication-flow)
--   [Core Architecture](#core-architecture)
-    -   [Directory Structure](#directory-structure)
-    -   [Data Flow](#data-flow)
--   [Hooks Library](#hooks-library)
-    -   [Base Hook: useTokenApi](#base-hook-usetokenapi)
-    -   [Specialized Hooks](#specialized-hooks)
-        -   [useTokenMetadata](#usetokenmetadata)
-        -   [useTokenBalances](#usetokenbalances)
-        -   [useTokenHolders](#usetokenholders)
-        -   [useTokenTransfers](#usetokentransfers)
-        -   [useTokenOHLCByPool](#usetokenohlcbypool)
-        -   [useTokenOHLCByContract](#usetokenohlcbycontract)
-        -   [useTokenPools](#usetokenpools)
-        -   [useTokenSwaps](#usetokenswaps)
--   [UI Components](#ui-components)
-    -   [Common Patterns](#common-patterns)
-    -   [Component Gallery](#component-gallery)
--   [Configuration System](#configuration-system)
-    -   [Network Configuration](#network-configuration)
-    -   [Protocol Configuration](#protocol-configuration)
-    -   [Example Tokens](#example-tokens)
-    -   [Time Configuration](#time-configuration)
-    -   [Block Time Utilities](#block-time-utilities)
--   [Utility Functions](#utility-functions)
-    -   [Address Utilities](#address-utilities)
--   [Type System](#type-system)
-    -   [Common Types](#common-types)
--   [Example Usage](#example-usage)
--   [API Endpoint References](#api-endpoint-references)
--   [Troubleshooting](#troubleshooting)
--   [Contributing](#contributing)
+- [Overview](#overview)
+- [Installation](#installation)
+- [API Configuration](#api-configuration)
+    - [Environment Setup](#environment-setup)
+    - [Next.js API Route Implementation](#nextjs-api-route-implementation)
+    - [Authentication Flow](#authentication-flow)
+- [Core Architecture](#core-architecture)
+    - [Directory Structure](#directory-structure)
+    - [Data Flow](#data-flow)
+- [Hooks Library](#hooks-library)
+    - [Base Hook: useTokenApi](#base-hook-usetokenapi)
+    - [Specialized Hooks](#specialized-hooks)
+        - [useTokenMetadata](#usetokenmetadata)
+        - [useTokenBalances](#usetokenbalances)
+        - [useTokenHolders](#usetokenholders)
+        - [useTokenTransfers](#usetokentransfers)
+        - [useTokenOHLCByPool](#usetokenohlcbypool)
+        - [useTokenOHLCByContract](#usetokenohlcbycontract)
+        - [useTokenPools](#usetokenpools)
+        - [useTokenSwaps](#usetokenswaps)
+- [UI Components](#ui-components)
+    - [Common Patterns](#common-patterns)
+    - [Component Gallery](#component-gallery)
+- [Configuration System](#configuration-system)
+    - [Network Configuration](#network-configuration)
+    - [Protocol Configuration](#protocol-configuration)
+    - [Example Tokens](#example-tokens)
+    - [Time Configuration](#time-configuration)
+    - [Block Time Utilities](#block-time-utilities)
+- [Utility Functions](#utility-functions)
+    - [Address Utilities](#address-utilities)
+- [Type System](#type-system)
+    - [Common Types](#common-types)
+- [Example Usage](#example-usage)
+- [API Endpoint References](#api-endpoint-references)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
 
 ## Overview
 
@@ -48,11 +48,11 @@ This SDK provides a complete toolkit for interacting with The Graph Token API, e
 
 Key features:
 
--   **React Hooks Library**: Specialized hooks for different token API endpoints
--   **UI Component Collection**: Ready-to-use components for displaying token data
--   **API Proxy Integration**: Secure API communication with authentication handling
--   **Multi-Network Support**: Works with Ethereum, Arbitrum, Base, BSC, Optimism, and Polygon
--   **TypeScript Support**: Full type safety with comprehensive interfaces
+- **React Hooks Library**: Specialized hooks for different token API endpoints
+- **UI Component Collection**: Ready-to-use components for displaying token data
+- **API Proxy Integration**: Secure API communication with authentication handling
+- **Multi-Network Support**: Works with Ethereum, Arbitrum, Base, BSC, Optimism, and Polygon
+- **TypeScript Support**: Full type safety with comprehensive interfaces
 
 For a detailed guide on how the components and hooks were built, see the [Components Tutorial](TUTORIAL.MD).
 To build the test page step-by-step yourself, follow the [Test Page Workshop](WORKSHOP.MD).
@@ -134,9 +134,8 @@ export async function GET(request: NextRequest) {
         if (process.env.NEXT_PUBLIC_GRAPH_API_KEY) {
             headers["X-Api-Key"] = process.env.NEXT_PUBLIC_GRAPH_API_KEY;
         } else if (process.env.NEXT_PUBLIC_GRAPH_TOKEN) {
-            headers[
-                "Authorization"
-            ] = `Bearer ${process.env.NEXT_PUBLIC_GRAPH_TOKEN}`;
+            headers["Authorization"] =
+                `Bearer ${process.env.NEXT_PUBLIC_GRAPH_TOKEN}`;
         }
 
         // Make the API request
@@ -242,11 +241,11 @@ export const useTokenApi = <DataType, ParamsType = Record<string, any>>(
 
 **Key Features**:
 
--   **Generic Type Parameters**: Allows for typed responses with `DataType` and `ParamsType`
--   **Conditional Fetching**: Supports skipping fetches with the `skip` option
--   **Auto-Refetching**: Supports auto-refreshing with `refetchInterval`
--   **Error Handling**: Comprehensive error handling and state management
--   **Manual Refetch**: Provides a function to manually trigger refetches
+- **Generic Type Parameters**: Allows for typed responses with `DataType` and `ParamsType`
+- **Conditional Fetching**: Supports skipping fetches with the `skip` option
+- **Auto-Refetching**: Supports auto-refreshing with `refetchInterval`
+- **Error Handling**: Comprehensive error handling and state management
+- **Manual Refetch**: Provides a function to manually trigger refetches
 
 ### Specialized Hooks
 
@@ -274,11 +273,11 @@ export const useTokenMetadata = (
 
 **Parameters**:
 
--   `contract`: Token contract address
--   `params`: Optional parameters
-    -   `network_id`: Network identifier
-    -   `include_market_data`: Whether to include price data (default: true)
--   `options`: Hook options (skip, refetchInterval)
+- `contract`: Token contract address
+- `params`: Optional parameters
+    - `network_id`: Network identifier
+    - `include_market_data`: Whether to include price data (default: true)
+- `options`: Hook options (skip, refetchInterval)
 
 **Response Type**:
 
@@ -341,14 +340,14 @@ export const useTokenBalances = (
 
 **Parameters**:
 
--   `address`: Wallet address
--   `params`: Optional parameters
-    -   `network_id`: Network identifier
-    -   `page`: Page number
-    -   `page_size`: Results per page
-    -   `min_amount`: Minimum token amount
-    -   `contract_address`: Filter for specific token
--   `options`: Hook options
+- `address`: Wallet address
+- `params`: Optional parameters
+    - `network_id`: Network identifier
+    - `page`: Page number
+    - `page_size`: Results per page
+    - `min_amount`: Minimum token amount
+    - `contract_address`: Filter for specific token
+- `options`: Hook options
 
 **Response Type**:
 
@@ -387,13 +386,13 @@ export const useTokenHolders = (
 
 **Parameters**:
 
--   `contract`: Token contract address
--   `params`: Optional parameters
-    -   `network_id`: Network identifier
-    -   `page`: Page number
-    -   `page_size`: Results per page
-    -   `order_by`: Sort order ("asc" or "desc")
--   `options`: Hook options
+- `contract`: Token contract address
+- `params`: Optional parameters
+    - `network_id`: Network identifier
+    - `page`: Page number
+    - `page_size`: Results per page
+    - `order_by`: Sort order ("asc" or "desc")
+- `options`: Hook options
 
 **Response Type**:
 
@@ -453,17 +452,17 @@ export const useTokenTransfers = (
 
 **Parameters**:
 
--   `address`: Wallet address (used as the `to` parameter)
--   `params`: Optional parameters
-    -   `network_id`: Network identifier (required by API)
-    -   `from`: Filter by sender address
-    -   `to`: Filter by recipient address (overridden by the main `address` argument)
-    -   `contract`: Filter by token contract
-    -   `startTime`, `endTime`: Filter by timestamp (Unix seconds)
-    -   `orderBy`, `orderDirection`: Sorting options
-    -   `limit`: Results per page
-    -   `page`: Page number
--   `options`: Hook options (skip, refetchInterval)
+- `address`: Wallet address (used as the `to` parameter)
+- `params`: Optional parameters
+    - `network_id`: Network identifier (required by API)
+    - `from`: Filter by sender address
+    - `to`: Filter by recipient address (overridden by the main `address` argument)
+    - `contract`: Filter by token contract
+    - `startTime`, `endTime`: Filter by timestamp (Unix seconds)
+    - `orderBy`, `orderDirection`: Sorting options
+    - `limit`: Results per page
+    - `page`: Page number
+- `options`: Hook options (skip, refetchInterval)
 
 **Response Type**:
 
@@ -528,15 +527,15 @@ export function useTokenOHLCByPool(
 
 **Parameters**:
 
--   `pool`: Pool contract address
--   `params`: Optional parameters
-    -   `network_id`: Network identifier
-    -   `from_timestamp`: Start timestamp
-    -   `to_timestamp`: End timestamp
-    -   `resolution`: Data resolution ("5m", "15m", "30m", "1h", "2h", "4h", "1d", "1w")
-    -   `page`: Page number
-    -   `page_size`: Results per page
--   `options`: Hook options
+- `pool`: Pool contract address
+- `params`: Optional parameters
+    - `network_id`: Network identifier
+    - `from_timestamp`: Start timestamp
+    - `to_timestamp`: End timestamp
+    - `resolution`: Data resolution ("5m", "15m", "30m", "1h", "2h", "4h", "1d", "1w")
+    - `page`: Page number
+    - `page_size`: Results per page
+- `options`: Hook options
 
 **Response Type**:
 
@@ -613,14 +612,14 @@ export function useTokenOHLCByContract(
 
 **Parameters**:
 
--   `options`: Configuration options
-    -   `contract`: Token contract address
-    -   `network`: Network identifier
-    -   `timeframe`: Time interval in seconds (default: 86400)
-    -   `startTime`: Start timestamp (Unix seconds)
-    -   `endTime`: End timestamp (Unix seconds)
-    -   `limit`: Number of results (default: 100)
-    -   `enabled`: Whether to enable the query (default: true)
+- `options`: Configuration options
+    - `contract`: Token contract address
+    - `network`: Network identifier
+    - `timeframe`: Time interval in seconds (default: 86400)
+    - `startTime`: Start timestamp (Unix seconds)
+    - `endTime`: End timestamp (Unix seconds)
+    - `limit`: Number of results (default: 100)
+    - `enabled`: Whether to enable the query (default: true)
 
 **Response Type**:
 
@@ -659,19 +658,19 @@ export const useTokenPools = (params?: PoolsParams, options = {}) => {
 
 **Parameters**:
 
--   `params`: Optional parameters
-    -   `network_id`: Network identifier
-    -   `token`: Filter by token address
-    -   `pool`: Filter by pool address
-    -   `symbol`: Filter by token symbol
-    -   `factory`: Filter by factory address
-    -   `protocol`: Filter by protocol
-    -   `page`: Page number
-    -   `page_size`: Results per page
-    -   `sort_by`: Sort field ("tvl" or "creation_date")
-    -   `sort_direction`: Sort direction ("asc" or "desc")
-    -   `include_reserves`: Include reserve data
--   `options`: Hook options
+- `params`: Optional parameters
+    - `network_id`: Network identifier
+    - `token`: Filter by token address
+    - `pool`: Filter by pool address
+    - `symbol`: Filter by token symbol
+    - `factory`: Filter by factory address
+    - `protocol`: Filter by protocol
+    - `page`: Page number
+    - `page_size`: Results per page
+    - `sort_by`: Sort field ("tvl" or "creation_date")
+    - `sort_direction`: Sort direction ("asc" or "desc")
+    - `include_reserves`: Include reserve data
+- `options`: Hook options
 
 **Response Type**:
 
@@ -718,17 +717,17 @@ export const useTokenSwaps = (
 
 **Parameters**:
 
--   `params`: Query parameters
-    -   `network_id`: Network identifier (required)
-    -   `pool`: Filter by pool address
-    -   `caller`: Filter by caller address
-    -   `sender`: Filter by sender address
-    -   `recipient`: Filter by recipient address
-    -   `tx_hash`: Filter by transaction hash
-    -   `protocol`: Filter by protocol
-    -   `page`: Page number
-    -   `page_size`: Results per page
--   `options`: Hook options
+- `params`: Query parameters
+    - `network_id`: Network identifier (required)
+    - `pool`: Filter by pool address
+    - `caller`: Filter by caller address
+    - `sender`: Filter by sender address
+    - `recipient`: Filter by recipient address
+    - `tx_hash`: Filter by transaction hash
+    - `protocol`: Filter by protocol
+    - `page`: Page number
+    - `page_size`: Results per page
+- `options`: Hook options
 
 **Response Type**:
 
@@ -771,14 +770,14 @@ All components follow these common patterns:
 
 The SDK includes UI components for each data type:
 
--   **GetMetadata**: Displays token metadata information
--   **GetBalances**: Shows token balances for an address
--   **GetHolders**: Lists token holders with pagination
--   **GetTransfers**: Displays token transfer history
--   **GetOHLCByContract**: Shows price charts for tokens
--   **GetOHLCByPool**: Shows price charts for liquidity pools
--   **GetSwaps**: Displays DEX swap events
--   **GetPools**: Lists liquidity pools
+- **GetMetadata**: Displays token metadata information
+- **GetBalances**: Shows token balances for an address
+- **GetHolders**: Lists token holders with pagination
+- **GetTransfers**: Displays token transfer history
+- **GetOHLCByContract**: Shows price charts for tokens
+- **GetOHLCByPool**: Shows price charts for liquidity pools
+- **GetSwaps**: Displays DEX swap events
+- **GetPools**: Lists liquidity pools
 
 Example usage:
 

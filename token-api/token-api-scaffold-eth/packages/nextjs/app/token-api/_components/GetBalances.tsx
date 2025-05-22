@@ -6,7 +6,7 @@ import { NetworkId } from "~~/app/token-api/_hooks/useTokenApi";
 import { TokenBalance, useTokenBalances } from "~~/app/token-api/_hooks/useTokenBalances";
 import { Address, AddressInput } from "~~/components/scaffold-eth";
 
-export const GetBalances = ({ isOpen = true }: { isOpen?: boolean }) => {
+export const GetBalances = ({ isOpen = false }: { isOpen?: boolean }) => {
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkId>("mainnet");
   const [balances, setBalances] = useState<TokenBalance[]>([]);

@@ -7,7 +7,7 @@ import { NetworkId } from "~~/app/token-api/_hooks/useTokenApi";
 import { Pool, PoolsParams, useTokenPools } from "~~/app/token-api/_hooks/useTokenPools";
 import { Address, AddressInput } from "~~/components/scaffold-eth";
 
-export const GetPools = ({ isOpen = true }: { isOpen?: boolean }) => {
+export const GetPools = ({ isOpen = false }: { isOpen?: boolean }) => {
   // State for search parameters
   const [poolAddress, setPoolAddress] = useState<string>("");
   const [tokenAddress, setTokenAddress] = useState<string>("");

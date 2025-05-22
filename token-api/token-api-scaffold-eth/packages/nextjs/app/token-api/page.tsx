@@ -4,6 +4,11 @@ import { GetBalances } from "./_components/GetBalances";
 import { GetHistorical } from "./_components/GetHistorical";
 import { GetHolders } from "./_components/GetHolders";
 import { GetMetadata } from "./_components/GetMetadata";
+import { GetNFTActivities } from "./_components/GetNFTActivities";
+import { GetNFTCollections } from "./_components/GetNFTCollections";
+import { GetNFTItems } from "./_components/GetNFTItems";
+import { GetNFTOwnerships } from "./_components/GetNFTOwnerships";
+import { GetNFTSales } from "./_components/GetNFTSales";
 import { GetOHLCByContract } from "./_components/GetOHLCByContract";
 import { GetOHLCByPool } from "./_components/GetOHLCByPool";
 import { GetPools } from "./_components/GetPools";
@@ -48,6 +53,15 @@ export default function TokenAPI() {
       <GetOHLCByContract />
       <GetPools />
       <GetSwaps />
+      {/* Spacing for NFT components */}
+      <div className="mt-12">
+        <h2 className="text-3xl font-bold text-center mb-6">NFT API Showcase</h2>
+      </div>
+      <GetNFTCollections isOpen={false} />
+      <GetNFTItems isOpen={false} />
+      <GetNFTOwnerships isOpen={false} />
+      <GetNFTActivities isOpen={false} />
+      <GetNFTSales isOpen={false} />
     </div>
   );
 }

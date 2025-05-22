@@ -8,7 +8,7 @@ import { NetworkId } from "~~/app/token-api/_hooks/useTokenApi";
 import { TokenMetadata, useTokenMetadata } from "~~/app/token-api/_hooks/useTokenMetadata";
 import { Address, AddressInput } from "~~/components/scaffold-eth";
 
-export const GetMetadata = ({ isOpen = true }: { isOpen?: boolean }) => {
+export const GetMetadata = ({ isOpen = false }: { isOpen?: boolean }) => {
   const [contractAddress, setContractAddress] = useState<string>("");
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkId>("mainnet");
   const [error, setError] = useState<string | null>(null);

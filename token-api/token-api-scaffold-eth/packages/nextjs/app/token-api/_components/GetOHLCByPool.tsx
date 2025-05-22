@@ -31,7 +31,7 @@ interface ExtendedPoolOHLCResponse extends PoolOHLCResponse {
   };
 }
 
-export const GetOHLCByPool = ({ isOpen = true }: { isOpen?: boolean }) => {
+export const GetOHLCByPool = ({ isOpen = false }: { isOpen?: boolean }) => {
   // State for search parameters
   const [poolAddress, setPoolAddress] = useState<string>("");
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkId>("mainnet");

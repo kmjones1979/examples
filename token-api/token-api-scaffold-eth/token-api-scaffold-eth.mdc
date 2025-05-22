@@ -1,0 +1,136 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# @token-api-scaffold-eth Features Documentation (.mdc)
+
+This document provides an overview of all the features available in the `@token-api-scaffold-eth` project. Add or update feature descriptions as the project evolves.
+
+---
+
+## Features
+
+### 1. Feature Name
+- **Description:** Briefly describe what this feature does.
+- **Usage:** How to use this feature in the project.
+- **Configuration:** Any configuration options or environment variables.
+- **Related Files/Modules:** List of relevant files or modules.
+
+---
+
+### 2. Feature Name
+- **Description:**
+- **Usage:**
+- **Configuration:**
+- **Related Files/Modules:**
+
+---
+
+<!-- Add more features as needed -->
+
+## Contribution
+If you add a new feature, please document it here following the structure above.
+
+---
+
+## Working with Hooks
+
+The `@token-api-scaffold-eth` project provides a robust set of React hooks for interacting with token APIs, fetching blockchain data, and building feature-rich dApps. These hooks abstract away API calls, state management, and error handling, making it easy to consume blockchain data in your UI components.
+
+### Base Hook: `useTokenApi`
+- **Purpose:** Foundation for all specialized hooks. Handles API requests, loading states, errors, and refetching.
+- **Location:** `packages/nextjs/app/token-api/_hooks/useTokenApi.ts`
+- **Key Options:**
+  - `skip`: Boolean to skip fetching
+  - `refetchInterval`: Auto-refetch interval (ms)
+- **Returns:** `{ data, isLoading, error, refetch, lastUpdated }`
+
+### Specialized Hooks
+Each specialized hook wraps `useTokenApi` for a specific data type or endpoint. Common hooks include:
+- `useTokenMetadata`
+- `useTokenBalances`
+- `useTokenHolders`
+- `useTokenTransfers`
+- `useTokenOHLCByPool`
+- `useTokenOHLCByContract`
+- `useTokenPools`
+- `useTokenSwaps`
+- `useHistoricalBalances`
+
+#### Example Usage in a React Component
+```tsx
+import {
+  useTokenMetadata,
+  useTokenBalances,
+  useTokenHolders,
+  useTokenTransfers,
+  useTokenOHLCByPool,
+  useTokenOHLCByContract,
+  useTokenPools,
+  useTokenSwaps,
+  useHistoricalBalances,
+} from "~~/app/token-api/_hooks";
+
+const contractAddress = "0x...";
+const walletAddress = "0x...";
+const poolAddress = "0x...";
+const networkId = "mainnet";
+
+const { data: metadata, isLoading: loadingMetadata } = useTokenMetadata(contractAddress, { network_id: networkId });
+const { data: balances } = useTokenBalances(walletAddress, { network_id: networkId });
+const { data: holders } = useTokenHolders(contractAddress, { network_id: networkId });
+const { data: transfers } = useTokenTransfers(walletAddress, { network_id: networkId });
+const { data: ohlcByPool } = useTokenOHLCByPool(poolAddress, { network_id: networkId, resolution: "1d" });
+const { data: ohlcByContract } = useTokenOHLCByContract({ contract: contractAddress, network: networkId });
+const { data: pools } = useTokenPools({ network_id: networkId });
+const { data: swaps } = useTokenSwaps({ network_id: networkId, pool: poolAddress });
+const { data: historicalBalances } = useHistoricalBalances(walletAddress, { network_id: networkId });
+```
+
+#### Common Patterns
+- All hooks return `{ data, isLoading, error, refetch, ... }`.
+- Use the `skip` option to conditionally fetch data.
+- Use `refetchInterval` for polling.
+- Pass relevant parameters (addresses, network IDs, etc.) as arguments.
+- See `WORKSHOP.MD` and `README.md` for more advanced usage and patterns.
+
+---
+
+## Main Features of @token-api
+
+The `@token-api` package provides a comprehensive toolkit for building blockchain data-driven applications. Here are the core features:
+
+### 1. Data Fetching Hooks
+- A suite of React hooks for fetching token, pool, swap, transfer, and historical data from blockchain APIs.
+- See the "Working with Hooks" section for details and usage examples.
+
+### 2. UI Components
+- Prebuilt React components for displaying blockchain data:
+  - `GetBalances`
+  - `GetHolders`
+  - `GetTransfers`
+  - `GetMetadata`
+  - `GetHistorical`
+  - `GetOHLCByPool`
+  - `GetOHLCByContract`
+  - `GetPools`
+  - `GetSwaps`
+- These components provide ready-to-use UIs for common blockchain data queries and visualizations.
+
+### 3. Type Definitions
+- Centralized TypeScript types for all API responses and data models, ensuring type safety and autocompletion in your app.
+
+### 4. Utility Functions
+- Helper utilities for address formatting, network handling, and other common tasks.
+
+### 5. Configurable Network and Protocol Support
+- Config files for supported networks, protocols, and time intervals, making it easy to extend or customize the API's reach.
+
+### 6. Explorer Page
+- The main `page.tsx` in the `token-api` directory acts as a Token API Explorer, aggregating all the above components into a single UI for demo and testing.
+
+### 7. Historical Data
+- The `GetHistorical` component and `useHistoricalBalances` hook provide advanced querying and visualization of historical token balances, with support for time intervals, pagination, and filtering.
+
+---
