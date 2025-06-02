@@ -38,6 +38,7 @@ For more information, visit [www.thegraph.com/docs](https://www.thegraph.com/doc
     -   [**token-api-quickstart**](./token-api/token-api-quickstart): Provides examples for integrating The Graph's Token API directly via React and through Cursor MCP. Covers token balances, transfers, and multi-chain support. (last updated May 2025)
     -   [**token-api-scaffold-eth**](./token-api/token-api-scaffold-eth): Demonstrates integrating The Graph's Token API with Scaffold ETH to accelerate development of full-stack decentralized applications. (last updated May 2025)
     -   [**token-api-tax-demo**](./token-api/token-api-tax-demo): Shows how to pull wallet balances, historical inventory, transfers, and price data from The Graph Token API for tax and accounting, using a lightweight HTML, CSS, JavaScript, and Express proxy. (last updated May 2025)
+    -   [**token-api-nft-components](./token-api/token-api-nft-components/) Five copy/paste components that feature Token API's NFT features. (Last updated June 2025)
 
 ## License
 
