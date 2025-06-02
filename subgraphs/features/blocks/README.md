@@ -1,4 +1,4 @@
-> **Last updated:** April 2024
+> **Last updated:** May 2025
 
 # Block information subgraphs
 
