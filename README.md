@@ -1,45 +1,114 @@
-# The Graph - Example Repositories
+# Token-API NFT React Components
 
-This repository contains links to example code for products built on The Graph. Each folder under this directory represents a separate example or demo showcasing various features and use-cases.
+A super-lightweight set of **five** React components that surface common NFT data from the [Token API](https://token-api.thegraph.com/).  
+Each component lives in a single file, has **zero runtime dependencies** (besides `react`) and can be copy-pasted straight into any React project.
 
-For more information, visit [www.thegraph.com/docs](https://www.thegraph.com/docs)
+## Preview Components Locally
 
-## Contents
+Try all components locally before adding them to your project:
 
--   **subgraphs/**
-    -   **basic-examples/**
-        -   [**init-subgraph**](./subgraphs/basic-examples/init-subgraph): "Hello world" starter generated via `graph init`; ideal for first-time users wanting to see the file layout and deploy something fast. (last updated April 2025)
-        -   [**arweave-blocks-transactions**](./subgraphs/basic-examples/arweave-blocks-transactions): Indexes Arweave blocks, transactions, tags and proofs-of-access; includes sample GraphQL queries for time-bounded block ranges. (last updated June 2022)
-        -   [**near-blocks-example**](./subgraphs/basic-examples/near/blocks-example): Simplest NEAR template indexing the chain's blocks to illustrate NEAR manifest syntax and block handlers. (last updated April 2025)
-        -   [**near-receipts-example**](./subgraphs/basic-examples/near/receipts-example): Indexes receipts from `app.good-morning.near`, showing how to build NEAR receipt-based entities. (last updated April 2025)
-        -   [**cosmos-block-filtering**](./subgraphs/basic-examples/cosmos/block-filtering): Cosmos Hub-compatible subgraph that captures every block header; scripts let you regenerate manifests for any Cosmos-SDK chain. (last updated April 2025)
-        -   [**cosmos-validator-rewards**](./subgraphs/basic-examples/cosmos/validator-rewards): Tracks validator reward events on Cosmos chains, building per-validator reward histories. (last updated April 2025)
-        -   [**cosmos-validator-delegations**](./subgraphs/basic-examples/cosmos/validator-delegations): Captures delegation messages, mapping delegator → validator and amounts—good reference for message decoding in Cosmos. (last updated March 2023)
-        -   [**cosmos-osmosis-token-swaps**](./subgraphs/basic-examples/cosmos/osmosis-token-swaps): Watches GAMM swap events on Osmosis to build a history of token swaps for any account. (last updated March 2023)
-        -   [**query-examples**](./subgraphs/basic-examples/query-examples): Cookbook showing how to query The Graph from many frameworks (React, Next.js, Vue, Svelte, Python, Go, CLI, etc.) using an API key and best-practice query patterns. (last updated May 2025)
-        -   [**ethereum-basic-event-handlers**](./subgraphs/basic-examples/ethereum-basic-event-handlers): Template illustrating custom event handler patterns for Ethereum contracts. (last updated 2025-05-09)
-    -   **features/**
-        -   [**blocks**](./subgraphs/features/blocks): Cross-network template that indexes block metadata (number, timestamp, etc.), letting you query blocks by number or time on any supported chain. (last updated April 2024)
-        -   [**composable-subgraph**](./subgraphs/features/composable-subgraph): Minimal demo of The Graph's subgraph composition feature where a composed subgraph consumes entities from three smaller block subgraphs for modular, reusable data pipelines. (last updated March 2025)
-        -   [**timeseries-and-aggregations-1**](./subgraphs/features/timeseries-and-aggregations-1): Lightweight sandbox that focuses purely on the mechanics of custom timeseries aggregations using predictable block numbers—perfect for learning aggregation syntax. (last updated Feb 2025)
-        -   [**timeseries-and-aggregations-2**](./subgraphs/features/timeseries-and-aggregations-2): Example demonstrating timeseries and aggregations with The Graph, using CryptoPunks events (transfers, bids, sales) to showcase data aggregation over time. Includes a video walkthrough. (last updated Feb 2025)
-        -   [**aggregations**](./subgraphs/features/aggregations): Demonstrates custom timeseries aggregations using predictable block numbers; schema, manifest, and mappings are heavily commented to teach aggregation patterns. (last updated April 2025)
-        -   [**matic-lens-protocol-posts-subgraph**](./subgraphs/features/matic-lens-protocol-posts-subgraph): Indexes posts from Lens Protocol on the Polygon (Matic) network to illustrate social-graph data indexing and file data sources indexing from IPFS and Arweave. (last updated August 2024)
-    -   **full-stack-examples/**
-        -   [**full-stack-dapp**](./subgraphs/full-stack-examples/full-stack-dapp): A workshop and template for full-stack dapp development using Scaffold-ETH 2 and The Graph. Covers environment setup, smart-contract deployment, subgraph creation, and frontend integration. Includes a video replay. (last updated Jan 2024)
-        -   [**hackathon-react-apollo-app**](./subgraphs/full-stack-examples/hackathon-react-apollo-app): React + Apollo + Material-UI hackathon starter that shows how to wire a subgraph endpoint into a modern UI component stack. (last updated 2018-03-22)
-        -   [**eth-denver-dapp**](./subgraphs/full-stack-examples/eth-denver-dapp): Step-by-step workshop repo from ETHDenver that spins up Ganache, a local Graph Node, deploys an example subgraph and connects it to a React front-end. (last updated 2022-12-09)
-    -   **examples-with-workshops/**
-        -   [**subgraph-beginner-development-workshop**](./subgraphs/examples-with-workshops/subgraph-beginner-development): Hands-on workshop (video + slides) that walks through building a CryptoPunks starter subgraph, extending entities, and writing advanced queries—ideal for new subgraph devs. (last updated April 2025)
-        -   [**file-data-sources**](./subgraphs/examples-with-workshops/file-data-sources): Workshop on using File Data Sources in subgraphs, including a fully functional example subgraph that implements File Data Sources and Full-Text Search, using the Beanz NFT collection as a case study. Includes slides. (last updated Feb 2024)
-        -   [**query-the-graph**](./subgraphs/examples-with-workshops/query-the-graph): Workshop on querying subgraphs. Covers creating API keys, sending demo queries, and methods for querying using Vanilla JS, Python (Flask), graph-client, and React Apollo. Includes slides. (last updated May 2024)
+```bash
+# Clone the repository
+git clone https://github.com/your-username/token-api-nft-components.git
+cd token-api-nft-components
 
--   **token-api/**
-    -   [**token-api-quickstart**](./token-api/token-api-quickstart): Provides examples for integrating The Graph's Token API directly via React and through Cursor MCP. Covers token balances, transfers, and multi-chain support. (last updated May 2025)
-    -   [**token-api-scaffold-eth**](./token-api/token-api-scaffold-eth): Demonstrates integrating The Graph's Token API with Scaffold ETH to accelerate development of full-stack decentralized applications. (last updated May 2025)
-    -   [**token-api-tax-demo**](./token-api/token-api-tax-demo): Shows how to pull wallet balances, historical inventory, transfers, and price data from The Graph Token API for tax and accounting, using a lightweight HTML, CSS, JavaScript, and Express proxy. (last updated May 2025)
-    -   [**token-api-nft-components**](./token-api/token-api-nft-components/) Five copy/paste components that feature Token API's NFT features. (Last updated June 2025)
+# Install dependencies
+npm install
 
-## License
+# Add your JWT token to .env (get token from https://marketplace.thegraph.com)
+echo "VITE_TOKEN_API_JWT_KEY=your_jwt_token_here" > .env
 
-This repository is licensed under the MIT License.
+# Start the dev server
+npm run dev
+```
+
+Then visit [http://localhost:5173](http://localhost:5173) to see:
+- All components running live
+- Pre-filled with example data
+- Interactive UI elements
+- Network selection options
+- API documentation links
+
+The preview includes example NFT collections and wallet addresses so you can see real data immediately. Perfect for deciding which components you need before copying them into your project.
+
+## Components
+
+| Component | Description | API Docs |
+|-----------|-------------|----------|
+| `ActivityFeed.jsx` | Latest mints / transfers / burns for a collection | [API →](https://token-api.service.pinax.network/#tag/evm/GET/nft/activities/evm) |
+| `CollectionStatsBadge.jsx` | High-level stats for a collection (supply, owners, transfers) | [API →](https://token-api.service.pinax.network/#tag/evm/GET/nft/collections/evm/%7Bcontract%7D) |
+| `NFTTopHolders.jsx` | Top addresses ranked by number of tokens held | [API →](https://token-api.service.pinax.network/#tag/evm/GET/nft/holders/evm/%7Bcontract%7D) |
+| `NFTWalletHoldings.jsx` | All NFTs owned by a wallet | [API →](https://token-api.service.pinax.network/#tag/evm/GET/nft/ownerships/evm/%7Baddress%7D) |
+| `RecentMintsTable.jsx` | Recent mint events for a collection | [API →](https://token-api.service.pinax.network/#tag/evm/GET/nft/activities/evm) |
+
+## Quick Start (2 minutes)
+
+1. **Get your JWT Token**
+   - Visit [The Graph Marketplace](https://marketplace.thegraph.com/)
+   - Get your JWT token for authenticated API access
+   - Higher rate limits than public endpoints
+
+2. **Create `.env` file in your project root:**
+   ```bash
+   # .env
+   VITE_TOKEN_API_JWT_KEY=your_jwt_token_here  # For Vite
+   # or
+   REACT_APP_TOKEN_API_JWT_KEY=your_jwt_token_here  # For Create React App
+   ```
+
+3. **Copy & Use Components**
+   ```jsx
+   // Example: App.jsx
+   import ActivityFeed from "./components/ActivityFeed";
+   import CollectionStatsBadge from "./components/CollectionStatsBadge";
+   
+   export default function App() {
+     return (
+       <div>
+         <CollectionStatsBadge />
+         <ActivityFeed />
+       </div>
+     );
+   }
+   ```
+
+## Example Contract Addresses
+
+Try these example addresses to see the components in action:
+
+- **NFT Collection:** `0xbd3531da5cf5857e7cfaa92426877b022e612cf8` (Pudgy Penguins)
+- **Wallet Address:** `0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045` (vitalik.eth)
+
+## Features
+
+- 🔒 Secure authentication with JWT
+- 🚀 Zero dependencies (just React)
+- 📱 Responsive & mobile-friendly
+- 🎨 Clean, minimal styling
+- 🔗 Direct links to API docs
+- ⚡ Instant copy & paste setup
+
+## Component Features
+
+Each component includes:
+- Pre-filled example addresses
+- Loading & error states
+- Network selection (mainnet active, others coming soon)
+- Direct links to API documentation
+- Clean, minimal styling that's easy to customize
+
+## Environment Setup
+
+The components support both Vite and Create React App:
+
+```bash
+# For Vite projects
+VITE_TOKEN_API_JWT_KEY=your_jwt_token_here
+
+# For Create React App projects
+REACT_APP_TOKEN_API_JWT_KEY=your_jwt_token_here
+```
+
+## API Documentation
+
+Each component links directly to its API documentation. Click the "API Docs ↗" link in any component's header to view the full API details. 
