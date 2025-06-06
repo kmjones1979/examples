@@ -6,7 +6,12 @@ For more information, visit [www.thegraph.com/docs](https://www.thegraph.com/doc
 
 ## Contents
 
+-   **agent/**
+
+    -   [**the-graph-agent-scaffold-eth/**](./agent/the-graph-agent-scaffold-eth/): "A starter kit that supports building an AI agent using Scaffold-ETH, NextJS, Hardhat, Vercel AI SDK, Subgraph MCP, The Graph Token API and Subgraph querying via GraphQL"
+
 -   **subgraphs/**
+
     -   **basic-examples/**
         -   [**init-subgraph**](./subgraphs/basic-examples/init-subgraph): "Hello world" starter generated via `graph init`; ideal for first-time users wanting to see the file layout and deploy something fast. (last updated June 2025)
         -   [**arweave-blocks-transactions**](./subgraphs/basic-examples/arweave-blocks-transactions): Indexes Arweave blocks, transactions, tags and proofs-of-access; includes sample GraphQL queries for time-bounded block ranges. (last updated June 2025)
