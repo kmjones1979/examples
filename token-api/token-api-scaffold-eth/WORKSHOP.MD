@@ -39,6 +39,7 @@ This workshop guides you through recreating a `WorkshopPage`. This component ser
         useNFTItems,
         useNFTOwnerships,
         useNFTActivities,
+        useNFTHolders,
         useNFTSales,
     } from "~~/app/token-api/_hooks";
     import type { NetworkId } from "~~/app/token-api/_types";
@@ -121,6 +122,7 @@ type LoggedKeys =
     | "nftItems"
     | "nftOwnerships"
     | "nftActivities"
+    | "nftHolders"
     | "nftSales";
 const [logged, setLogged] = useState<Partial<Record<LoggedKeys, boolean>>>({});
 ```
@@ -277,6 +279,17 @@ const {
         : null
 );
 
+// --- NFTHolders Hook ---
+const {
+    data: nftHoldersData,
+    isLoading: isLoadingNFTHolders,
+    error: errorNFTHolders,
+} = useNFTHolders({
+    contractAddress: contractAddress,
+    network: selectedNetwork,
+    enabled: timestampsReady,
+});
+
 // --- NFTSales Hook ---
 const {
     data: nftSalesData,
@@ -386,6 +399,17 @@ useEffect(() => {
         setLogged((l) => ({ ...l, nftActivities: true }));
     }
 }, [nftActivitiesData, isLoadingNFTActivities, errorNFTActivities, logged]);
+
+useEffect(() => {
+    if (!logged.nftHolders && nftHoldersData !== undefined) {
+        console.log("useNFTHolders:", {
+            data: nftHoldersData,
+            isLoading: isLoadingNFTHolders,
+            error: errorNFTHolders,
+        });
+        setLogged((l) => ({ ...l, nftHolders: true }));
+    }
+}, [nftHoldersData, isLoadingNFTHolders, errorNFTHolders, logged]);
 
 useEffect(() => {
     if (!logged.nftSales && nftSalesData !== undefined) {
@@ -563,10 +587,20 @@ This workshop provides a solid foundation for integrating both token and NFT hoo
 
 **Key Takeaways:**
 
-- Token hooks work with traditional ERC20 data (balances, transfers, prices)
-- NFT hooks provide comprehensive NFT functionality (collections, items, ownerships, activities, sales)
-- Some NFT hooks (like NFT Activities) require specific parameters (contract addresses)
-- Time filtering is crucial for preventing database timeouts on popular contracts
-- All hooks now return arrays directly, eliminating data structure confusion
+- **Token hooks** work with traditional ERC20 data (balances, transfers, prices)
+- **NFT hooks** provide comprehensive NFT functionality (collections, items, ownerships, activities, sales)
+- **Authentication is required**: Ensure `NEXT_PUBLIC_GRAPH_TOKEN` is set in your `.env.local` file
+- **NFT Activities API requirements**: Contract address is mandatory - cannot work with just wallet addresses
+- **Time filtering prevents timeouts**: Default 30-day ranges are automatically applied for popular contracts
+- **Data structure simplified**: All hooks now return arrays directly (`NFTCollection[]`), eliminating confusion
+- **Error handling improved**: Clear messages for authentication, validation, and timeout issues
+
+**Common Issues Resolved:**
+
+- Authentication 401 errors → Set proper Graph API token
+- "No NFT collections found" → Fixed authentication and data processing
+- Database timeouts → Implemented automatic time filtering
+- Validation errors → Added required parameter validation
+- Data structure confusion → Hooks return arrays directly
 
 Remember to consult the hook definitions and `_types` directory for detailed parameter options and response structures. Check the main README.md for troubleshooting common issues like authentication errors and database timeouts.
