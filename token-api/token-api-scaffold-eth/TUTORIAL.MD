@@ -88,19 +88,24 @@ export const useTokenMetadata = (
 
 - `useNFTCollections`: Used in `GetNFTCollections.tsx` for fetching NFT collection metadata
 - `useNFTItems`: Used in `GetNFTItems.tsx` for retrieving individual NFT items
-- `useNFTOwnerships`: Used in `GetNFTOwnerships.tsx` for fetching NFT ownership data
-- `useNFTActivities`: Used in `GetNFTActivities.tsx` for NFT transaction history
-- `useNFTSales`: Used in `GetNFTSales.tsx` for NFT marketplace sales data
+    - `useNFTOwnerships`: Used in `GetNFTOwnerships.tsx` for fetching NFT ownership data
+    - `useNFTActivities`: Used in `GetNFTActivities.tsx` for NFT transaction history
+    - `useNFTHolders`: Used in `GetNFTHolders.tsx` for fetching NFT holder distribution data
+    - `useNFTSales`: Used in `GetNFTSales.tsx` for NFT marketplace sales data
 
 ### Key Improvements Made
 
 **Data Structure Fix**: All hooks now return arrays directly (e.g., `NFTCollection[]`) instead of response wrapper objects, eliminating the need for components to access `data?.data`.
 
-**Authentication Error Handling**: Enhanced error detection and user guidance for API authentication issues.
+**Authentication Error Handling**: Enhanced error detection and user guidance for API authentication issues. The Graph Token API requires proper `NEXT_PUBLIC_GRAPH_TOKEN` configuration.
 
-**Parameter Validation**: Added proper validation for required parameters (e.g., contract addresses for NFT Activities).
+**Parameter Validation**: Added proper validation for required parameters (e.g., contract addresses for NFT Activities). The NFT Activities API specifically requires a contract address and cannot work with just wallet addresses.
 
-**Time Filtering**: Implemented advanced time filtering with quick-select buttons to prevent database timeouts on popular contracts.
+**Time Filtering**: Implemented advanced time filtering with quick-select buttons to prevent database timeouts on popular contracts. Default 30-day ranges are now automatically applied.
+
+**Interface Completeness**: Added missing fields like `token_standard`, `total_unique_supply` to NFT collection interfaces, ensuring complete data structure coverage.
+
+**Contract Address Normalization**: Implemented proper address cleaning and normalization functions to handle various input formats.
 
 ## Component Implementation Pattern
 
@@ -227,7 +232,14 @@ Example from GetMetadata.tsx:
     - Implements advanced time filtering to prevent database timeouts
     - Supports filtering by wallet addresses (from/to/any)
 
-12. **GetNFTSales.tsx**
+12. **GetNFTHolders.tsx**
+
+    - Uses `useNFTHolders` to fetch NFT holder information for a contract
+    - Displays holder addresses, quantities, and percentage distribution
+    - Shows token standards (ERC721, ERC1155) and unique token counts
+    - Includes proper address normalization and contract validation
+
+13. **GetNFTSales.tsx**
     - Uses `useNFTSales` to fetch NFT marketplace sales data
     - Maps `token` parameter to `contract` for API compatibility
     - Displays sales information including price and marketplace data

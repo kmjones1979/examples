@@ -9,6 +9,7 @@ export * from "./useTokenSwaps";
 export { useTokenTransfers } from "./useTokenTransfers";
 export { useHistoricalBalances } from "./useHistoricalBalances";
 export * from "./useNFTCollections";
+export * from "./useNFTHolders";
 export * from "./useNFTItems";
 export * from "./useNFTActivities";
 export * from "./useNFTOwnerships";

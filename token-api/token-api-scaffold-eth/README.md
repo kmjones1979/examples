@@ -29,6 +29,7 @@ A comprehensive SDK for interacting with The Graph Token API built on Scaffold-E
         - [useNFTItems](#usenftitems)
         - [useNFTOwnerships](#usenftownerships)
         - [useNFTActivities](#usenftactivities)
+        - [useNFTHolders](#usenftholders)
         - [useNFTSales](#usenftSales)
 - [UI Components](#ui-components)
     - [Common Patterns](#common-patterns)
@@ -255,6 +256,7 @@ export const useTokenApi = <DataType, ParamsType = Record<string, any>>(
 - **Auto-Refetching**: Supports auto-refreshing with `refetchInterval`
 - **Error Handling**: Comprehensive error handling and state management
 - **Manual Refetch**: Provides a function to manually trigger refetches
+- **Authentication Error Detection**: Clear guidance for API setup and troubleshooting
 
 ### Token API Hooks
 
@@ -973,6 +975,46 @@ interface NFTActivity {
 }
 ```
 
+#### useNFTHolders
+
+Fetches NFT holder information for a specific contract.
+
+**Location**: `packages/nextjs/app/token-api/_hooks/useNFTHolders.ts`
+
+```typescript
+export function useNFTHolders(options: UseNFTHoldersOptions) {
+    const { contractAddress, network = "mainnet", enabled = true } = options;
+
+    const normalizedContractAddress = normalizeContractAddress(contractAddress);
+    const endpoint = `nft/holders/evm/${normalizedContractAddress}`;
+
+    return useTokenApi<NFTHolder[]>(
+        endpoint,
+        { network_id: network },
+        { skip: !normalizedContractAddress || !enabled }
+    );
+}
+```
+
+**Parameters**:
+
+- `contractAddress`: NFT contract address (required)
+- `network`: Network identifier (default: "mainnet")
+- `enabled`: Whether to enable the query (default: true)
+
+**Response Type**:
+
+```typescript
+interface NFTHolder {
+    token_standard: string; // ERC721, ERC1155, etc.
+    address: string; // Holder's wallet address
+    quantity: number; // Number of tokens held
+    unique_tokens: number; // Number of unique tokens held
+    percentage: number; // Percentage of total supply held
+    network_id: NetworkId;
+}
+```
+
 #### useNFTSales
 
 Fetches NFT sales/marketplace data.
@@ -1067,6 +1109,7 @@ The SDK includes UI components for each data type:
 - **GetNFTItems**: Shows individual NFTs from a collection with metadata
 - **GetNFTOwnerships**: Lists NFTs owned by a wallet address
 - **GetNFTActivities**: Displays NFT transaction history with advanced filtering
+- **GetNFTHolders**: Shows NFT holder information and distribution statistics
 - **GetNFTSales**: Shows NFT marketplace sales data
 
 Example usage:
@@ -1076,6 +1119,7 @@ import { GetMetadata } from "~~/app/token-api/_components/GetMetadata";
 import { GetBalances } from "~~/app/token-api/_components/GetBalances";
 import { GetNFTCollections } from "~~/app/token-api/_components/GetNFTCollections";
 import { GetNFTOwnerships } from "~~/app/token-api/_components/GetNFTOwnerships";
+import { GetNFTHolders } from "~~/app/token-api/_components/GetNFTHolders";
 
 export default function YourPage() {
     return (
@@ -1095,6 +1139,7 @@ export default function YourPage() {
             {/* NFT Components */}
             <GetNFTCollections isOpen={true} />
             <GetNFTOwnerships isOpen={true} />
+            <GetNFTHolders isOpen={true} />
         </div>
     );
 }
@@ -1360,7 +1405,25 @@ The SDK covers the following Token API endpoints:
 - `/nft/items/evm/{contract}` - NFT items
 - `/nft/ownerships/evm/{address}` - NFT ownerships
 - `/nft/activities/evm` - NFT activities
+- `/nft/holders/evm/{contract}` - NFT holders
 - `/nft/sales/evm` - NFT sales
+
+## Recent Updates & Fixes
+
+**Major Improvements in Latest Version:**
+
+- **Authentication Fix**: All APIs now properly handle authentication with comprehensive error messages
+- **Data Structure Normalization**: Hooks return arrays directly (`NFTCollection[]`) instead of nested response objects
+- **NFT Activities Requirements**: Contract address is now a required parameter with proper validation
+- **Time Filtering**: Automatic 30-day time ranges prevent database timeouts on popular contracts
+- **Interface Completeness**: Added missing fields like `token_standard` and `total_unique_supply` to NFT interfaces
+- **Error Handling**: Enhanced error detection for authentication, validation, and timeout issues
+
+**Breaking Changes:**
+
+- Hook return types changed from `{data: T[]}` to `T[]` directly
+- NFT Activities API requires `contract_address` parameter (no longer optional)
+- Time filtering now uses default ranges to prevent timeouts
 
 ## Troubleshooting
 
@@ -1385,6 +1448,7 @@ The SDK covers the following Token API endpoints:
 - This was resolved in recent updates where hooks now return data arrays directly
 - Ensure you're using the latest version of the hooks
 - Check that components use `Array.isArray(data)` instead of `data?.data`
+- All hooks now return proper array types (e.g., `NFTCollection[]`, `NFTItem[]`) instead of wrapper objects
 
 ### NFT Activities API Issues
 
@@ -1394,6 +1458,7 @@ The SDK covers the following Token API endpoints:
 - The NFT Activities API requires a contract address parameter
 - Ensure you provide a valid NFT contract address (not just a wallet address)
 - Use time filters to prevent database timeouts on popular contracts
+- Contract address is now a required parameter with proper validation
 
 ### Database Timeout Issues
 
@@ -1403,6 +1468,7 @@ The SDK covers the following Token API endpoints:
 - Add time filters (startTime and endTime) to your queries
 - Use the provided time range buttons (Last 24h, Last 7 days, etc.)
 - Popular NFT contracts like BAYC require time filtering to avoid timeouts
+- Default 30-day time ranges are now automatically applied to prevent timeouts
 
 ### Network Connection Issues
 
