@@ -18,6 +18,11 @@
     -   [Component Interaction](#component-interaction)
     -   [Data Flow](#data-flow)
 -   [Key System Features](#key-system-features)
+-   [MCP Integration](#mcp-integration)
+    -   [Overview](#overview)
+    -   [Available MCP Tools](#available-mcp-tools)
+    -   [MCP Provider Implementation](#mcp-provider-implementation)
+    -   [MCP Usage Examples](#mcp-usage-examples)
 -   [Available Subgraphs](#available-subgraphs)
 -   [Adding New Subgraph Endpoints](#adding-new-subgraph-endpoints)
 -   [Detailed Setup Guide](#detailed-setup-guide)
@@ -45,6 +50,7 @@
 -   ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it
 -   🤖 **AI-Powered Chat Interface**: Natural language interaction with blockchain data and smart contracts
 -   📊 **GraphQL Integration**: Query blockchain data through The Graph protocol
+-   🔌 **MCP Integration**: Direct connection to The Graph's official Model Context Protocol server
 -   🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/)
 -   🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components
 -   🔥 **Burner Wallet & Local Faucet**: Quickly test your application
@@ -131,15 +137,24 @@ Detailed explanations of the foundational pieces of this application.
         -   **Tool Definition**: Actions are described with a name, description, and a Zod schema for input validation, making them understandable and usable by the AI.
         -   **Invocation**: The AI decides which tool to use based on the user's query and the provided descriptions. The `app/api/chat/route.ts` orchestrates this.
 
-3.  **GraphQL Integration** (`utils/chat/agentkit/action-providers/graph-querier.ts`)
+3.  **MCP Integration** (`utils/chat/agentkit/action-providers/graph-mcp-provider.ts`)
 
-    -   **Functionality**: Enables the AI agent to fetch data from The Graph Protocol by constructing and executing GraphQL queries.
+    -   **Functionality**: Connects directly to The Graph's official Model Context Protocol (MCP) server, providing advanced subgraph discovery and querying capabilities.
+    -   **Key Aspects**:
+        -   **Official MCP Server**: Connects to `https://subgraphs.mcp.thegraph.com/sse` using Server-Sent Events (SSE) transport.
+        -   **Dynamic Subgraph Discovery**: Search and discover subgraphs by keyword or contract address.
+        -   **Schema Introspection**: Retrieve GraphQL schemas for any subgraph to understand available entities and fields.
+        -   **Flexible Querying**: Execute GraphQL queries against subgraphs using subgraph ID, deployment ID, or IPFS hash.
+
+4.  **Legacy GraphQL Integration** (`utils/chat/agentkit/action-providers/graph-querier.ts`)
+
+    -   **Functionality**: Static GraphQL integration with pre-configured subgraph endpoints (maintained for backward compatibility).
     -   **Key Aspects**:
         -   **Subgraph Endpoints**: Manages a list of pre-configured (and dynamically accessible via API key) subgraph URLs (e.g., Uniswap, Aave).
         -   **Dynamic Queries**: The AI can request queries against any of the configured subgraphs.
         -   **Type Safety**: Uses Zod schemas to validate the structure of GraphQL queries formulated by the agent.
 
-4.  **Token API Integration** (Proxy: `app/api/token-proxy/route.ts`, Utilities: `utils/chat/agentkit/token-api/utils.ts`, Schemas: `utils/chat/agentkit/token-api/schemas.ts`)
+5.  **Token API Integration** (Proxy: `app/api/token-proxy/route.ts`, Utilities: `utils/chat/agentkit/token-api/utils.ts`, Schemas: `utils/chat/agentkit/token-api/schemas.ts`)
     -   **Functionality**: Provides access to comprehensive token data (balances, transfers, metadata, market prices, etc.) from an external token API service (e.g., The Graph's Token API).
     -   **Key Aspects**:
         -   **Proxy Server**: A Next.js API route (`/api/token-proxy`) that securely forwards requests to the external token API. This is crucial for hiding API keys from the client-side.
@@ -150,7 +165,55 @@ Detailed explanations of the foundational pieces of this application.
 
 This section highlights critical files and their roles within the application architecture.
 
-1.  **GraphQL Query Handler** (`utils/chat/agentkit/action-providers/graph-querier.ts`)
+1.  **MCP Provider** (`utils/chat/agentkit/action-providers/graph-mcp-provider.ts`)
+
+    -   **Purpose**: Implements an AgentKit `ActionProvider` that connects to The Graph's official MCP server for dynamic subgraph discovery and querying.
+    -   **Core Logic**:
+        -   Uses `experimental_createMCPClient` from Vercel AI SDK to establish SSE connection to `https://subgraphs.mcp.thegraph.com/sse`.
+        -   Provides memoized connection management to ensure single client instance.
+        -   Exposes five main actions: `searchSubgraphs`, `getContractSubgraphs`, `getSubgraphSchema`, `executeMCPQuery`, and `listMCPTools`.
+        -   Handles authentication using `GRAPH_API_KEY` as Bearer token.
+
+    ```typescript
+    // Core MCP client setup with memoization
+    const getMcpClient = memoize(async () => {
+      if (!process.env.GRAPH_API_KEY) {
+        throw new Error("GRAPH_API_KEY environment variable not set.");
+      }
+
+      const client = await experimental_createMCPClient({
+        transport: {
+          type: "sse",
+          url: "https://subgraphs.mcp.thegraph.com/sse",
+          headers: {
+            Authorization: `Bearer ${process.env.GRAPH_API_KEY}`,
+          },
+        },
+      });
+
+      return client;
+    });
+
+    // Example action: Search for subgraphs by keyword
+    {
+      name: "searchSubgraphs",
+      description: "Search for subgraphs by keyword using The Graph's MCP",
+      schema: searchSubgraphsSchema,
+      invoke: async ({ keyword }) => {
+        const result = await invokeMcpTool("search_subgraphs_by_keyword", { keyword });
+        return JSON.stringify(result, null, 2);
+      }
+    }
+    ```
+
+    **Key Features & Best Practices**:
+
+    -   **Connection Management**: Uses memoization to ensure efficient connection reuse.
+    -   **Error Handling**: Comprehensive error handling with structured error responses.
+    -   **Type Safety**: Full Zod schema validation for all inputs and outputs.
+    -   **Debug Support**: Includes `listMCPTools` action for troubleshooting available MCP tools.
+
+2.  **Legacy GraphQL Query Handler** (`utils/chat/agentkit/action-providers/graph-querier.ts`)
 
     -   **Purpose**: Implements an AgentKit `ActionProvider` that allows the AI to query various subgraphs available through The Graph Protocol.
     -   **Core Logic**:
@@ -230,7 +293,7 @@ This section highlights critical files and their roles within the application ar
     -   Supports query variables for dynamic data fetching.
     -   **Best Practice**: Ensure `GRAPH_API_KEY` is set in `.env.local`. When adding new subgraphs, define them clearly in `SUBGRAPH_ENDPOINTS`. Keep query descriptions for the AI clear and specific.
 
-2.  **Chat API Route** (`app/api/chat/route.ts`)
+3.  **Chat API Route** (`app/api/chat/route.ts`)
 
     -   **Purpose**: The main backend endpoint that receives user messages from the chat interface, orchestrates the AI's response generation using AgentKit and OpenAI, and streams the response back.
     -   **Core Logic**:
@@ -287,7 +350,7 @@ This section highlights critical files and their roles within the application ar
     -   Provides real-time response streaming.
     -   **Best Practice**: Craft clear and comprehensive system prompts. This is crucial for guiding the AI's behavior and ensuring it uses the available tools correctly. Regularly update the prompt as new tools or capabilities are added. Secure this endpoint appropriately.
 
-3.  **Chat Interface** (`app/chat/page.tsx`)
+4.  **Chat Interface** (`app/chat/page.tsx`)
 
     -   **Purpose**: The frontend React component that renders the chat UI, handles user input, displays messages (both user's and AI's), and visualizes tool calls and results.
     -   **Core Logic**:
@@ -371,7 +434,7 @@ This section highlights critical files and their roles within the application ar
     -   Error state management and display.
     -   **Best Practice**: Provide clear visual feedback to the user about the AI's status (e.g., "AI is thinking...", "AI is using tool X..."). Ensure the UI gracefully handles and displays errors returned from the backend or from tool executions.
 
-4.  **Token API Proxy Route** (`app/api/token-proxy/route.ts`)
+5.  **Token API Proxy Route** (`app/api/token-proxy/route.ts`)
 
     -   **Purpose**: A backend API route that acts as a secure intermediary between your application (specifically, the AgentKit actions running on the server) and an external Token API. This is essential for protecting your Token API credentials.
     -   **Core Logic**:
@@ -473,7 +536,7 @@ This section highlights critical files and their roles within the application ar
     -   **Error Handling**: Propagates errors from the external API back to the caller.
     -   **Clarity**: The `path` parameter should clearly map to the external API's own path structure. For example, if the external API endpoint is `https://token-api.thegraph.com/v1/tokens/mainnet/0xContract/transfers?limit=10`, then `path` would be `v1/tokens/mainnet/0xContract/transfers` and `limit=10` would be a forwarded query parameter.
 
-5.  **Token API Utilities** (`utils/chat/agentkit/token-api/utils.ts`)
+6.  **Token API Utilities** (`utils/chat/agentkit/token-api/utils.ts`)
 
     -   **Purpose**: A collection of server-side TypeScript functions designed to be used by AgentKit actions. These functions abstract the details of making requests to the `/api/token-proxy` to fetch various types of token information.
     -   **Core Logic**:
@@ -609,7 +672,7 @@ This section highlights critical files and their roles within the application ar
     -   Uses Zod schemas defined in `schemas.ts` for request parameters and API responses. This ensures that AgentKit actions provide valid data and can reliably consume the results.
     -   **Best Practice**: Each utility function should have a clear, single responsibility. Input parameters and output structures should be robustly typed and validated using Zod. Implement comprehensive error handling and logging.
 
-6.  **Token API Schemas** (`utils/chat/agentkit/token-api/schemas.ts`)
+7.  **Token API Schemas** (`utils/chat/agentkit/token-api/schemas.ts`)
 
     -   **Purpose**: This file centralizes the Zod schema definitions for all data structures related to the Token API. This includes schemas for parameters taken by the utility functions (and thus by AgentKit actions) and for the expected shapes of API responses.
     -   **Core Logic**:
@@ -730,11 +793,11 @@ This section highlights critical files and their roles within the application ar
     API Route (route.ts)
     ↓ Processes with OpenAI
     ↓ Initializes AgentKit
-    GraphQL Handler (graph-querier.ts)  OR  Token API Utilities (token-api/utils.ts)
-    ↓                                       ↓ Calls Token API Proxy
-    ↓ Executes queries (The Graph)          Token API Proxy (token-proxy/route.ts)
-    ↓                                       ↓ Queries External Token API
-    ↓ Returns results                       ↓ Returns results
+    MCP Provider (graph-mcp-provider.ts)  OR  Legacy GraphQL Handler  OR  Token API Utilities
+    ↓                                         ↓                           ↓ Calls Token API Proxy
+    ↓ Connects to MCP Server (SSE)            ↓ Direct subgraph queries   Token API Proxy (token-proxy/route.ts)
+    ↓ Uses official MCP tools                 ↓ (Static endpoints)        ↓ Queries External Token API
+    ↓ Returns structured data                 ↓ Returns results           ↓ Returns results
     API Route
     ↓ Streams response
     Chat Interface
@@ -803,6 +866,174 @@ This section was previously named "Key Features" and has been renamed for clarit
     - SIWE authentication
     - API key management
     - Input sanitization
+
+## MCP Integration
+
+### Overview
+
+The MCP (Model Context Protocol) integration provides a direct connection to The Graph's official MCP server, enabling dynamic subgraph discovery and advanced querying capabilities. This is the recommended approach for interacting with The Graph protocol, offering superior flexibility compared to static endpoint configurations.
+
+**Key Advantages:**
+
+-   **Dynamic Discovery**: Search and discover subgraphs by keywords or contract addresses
+-   **Schema Introspection**: Automatically retrieve GraphQL schemas for any subgraph
+-   **Official Support**: Direct connection to The Graph's maintained MCP server
+-   **Real-time Updates**: Access to the latest subgraph information and metadata
+
+### Available MCP Tools
+
+The MCP provider exposes the following tools through The Graph's official MCP server:
+
+| Tool Name              | Description                            | Parameters                                              |
+| ---------------------- | -------------------------------------- | ------------------------------------------------------- |
+| `searchSubgraphs`      | Search for subgraphs by keyword        | `keyword: string`                                       |
+| `getContractSubgraphs` | Find top subgraphs indexing a contract | `contractAddress: string, chain: string`                |
+| `getSubgraphSchema`    | Get GraphQL schema for a subgraph      | `subgraphId \| deploymentId \| ipfsHash`                |
+| `executeMCPQuery`      | Execute GraphQL query against subgraph | `query: string, subgraphId \| deploymentId \| ipfsHash` |
+| `listMCPTools`         | Debug: List all available MCP tools    | None                                                    |
+
+### MCP Provider Implementation
+
+The `GraphMCPProvider` class implements the AgentKit `ActionProvider` interface and manages the connection to The Graph's MCP server:
+
+```typescript
+// Connection establishment with authentication
+const client = await experimental_createMCPClient({
+    transport: {
+        type: "sse",
+        url: "https://subgraphs.mcp.thegraph.com/sse",
+        headers: {
+            Authorization: `Bearer ${process.env.GRAPH_API_KEY}`,
+        },
+    },
+});
+```
+
+**Key Implementation Details:**
+
+1. **Memoized Connection Management**
+
+    ```typescript
+    const getMcpClient = memoize(async () => {
+        // Creates and caches a single MCP client instance
+    });
+    ```
+
+2. **Tool Invocation Wrapper**
+
+    ```typescript
+    async function invokeMcpTool(toolName: string, args: any) {
+        const { tools } = await getMcpTools();
+        const tool = tools[toolName];
+        return await tool.execute(args);
+    }
+    ```
+
+3. **Comprehensive Error Handling**
+    ```typescript
+    try {
+        const result = await invokeMcpTool("search_subgraphs_by_keyword", {
+            keyword,
+        });
+        return JSON.stringify(result, null, 2);
+    } catch (error) {
+        return JSON.stringify({
+            error: error instanceof Error ? error.message : "Operation failed",
+        });
+    }
+    ```
+
+### MCP Usage Examples
+
+#### 1. Finding Subgraphs for a Contract
+
+```
+User: "Find subgraphs for the ENS Registry contract 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e on mainnet"
+
+AI Process:
+1. Uses getContractSubgraphs action
+2. Calls get_top_subgraph_deployments MCP tool
+3. Returns top 3 subgraphs indexing that contract
+
+Response: Lists relevant ENS subgraphs with metadata like:
+- Subgraph ID
+- Deployment ID
+- Query fees
+- Network information
+```
+
+#### 2. Searching for Subgraphs by Keyword
+
+```
+User: "Find Uniswap V3 subgraphs"
+
+AI Process:
+1. Uses searchSubgraphs action
+2. Calls search_subgraphs_by_keyword MCP tool
+3. Returns matching subgraphs ordered by signal
+
+Response: Shows Uniswap V3 related subgraphs with:
+- Display names
+- Descriptions
+- Signal amounts
+- Current versions
+```
+
+#### 3. Schema Introspection and Querying
+
+```
+User: "What entities are available in the Uniswap V3 subgraph?"
+
+AI Process:
+1. First searches for Uniswap V3 subgraphs (if needed)
+2. Uses getSubgraphSchema action with subgraph ID
+3. Calls get_schema_by_subgraph_id MCP tool
+4. Parses and explains available entities
+
+Response: Lists entities like Pool, Token, Position, etc. with their fields
+```
+
+#### 4. Advanced Query Execution
+
+```
+User: "Show me the top 5 Uniswap V3 pools by TVL"
+
+AI Process:
+1. Identifies relevant subgraph (via search if needed)
+2. Constructs appropriate GraphQL query
+3. Uses executeMCPQuery action
+4. Calls execute_query_by_subgraph_id MCP tool
+
+GraphQL Query:
+query {
+  pools(
+    first: 5
+    orderBy: totalValueLockedUSD
+    orderDirection: desc
+  ) {
+    id
+    token0 { symbol }
+    token1 { symbol }
+    totalValueLockedUSD
+    volumeUSD
+  }
+}
+```
+
+**Error Handling Examples:**
+
+-   **Invalid Contract Address**: "Contract address format is invalid"
+-   **Chain Not Supported**: "Chain 'unsupported-chain' not found"
+-   **Query Syntax Error**: "GraphQL syntax error: Expected Name, found }"
+-   **Schema Not Found**: "Schema not available for deployment ID 0x..."
+
+**Best Practices:**
+
+1. **Always provide chain parameter** when using `getContractSubgraphs`
+2. **Use specific subgraph identifiers** (ID, deployment ID, or IPFS hash) for querying
+3. **Handle pagination** for large result sets in queries
+4. **Validate GraphQL syntax** before execution
+5. **Check schema** before constructing complex queries
 
 ### Available Subgraphs
 
@@ -995,10 +1226,11 @@ Here's a step-by-step guide to add a new subgraph endpoint (e.g., Compound Finan
 
 Proper configuration of environment variables is crucial for the application to run correctly and securely. Store these in a `.env.local` file at the root of your `packages/nextjs` directory. **Never commit your `.env.local` file to version control.**
 
-1.  **`GRAPH_API_KEY`** (For The Graph Protocol - `graph-querier.ts`)
+1.  **`GRAPH_API_KEY`** (For The Graph Protocol - Required for both legacy and MCP integrations)
 
     -   ⚠️ Use a development key with limited permissions for querying subgraphs.
-    -   _Note: This key is used by `graph-querier.ts` for accessing The Graph subgraphs._
+    -   _Note: This key is used by both `graph-querier.ts` (legacy) and `graph-mcp-provider.ts` (MCP) for accessing The Graph services._
+    -   _MCP Usage: Used as Bearer token for authentication with The Graph's MCP server at `https://subgraphs.mcp.thegraph.com/sse`_
 
 2.  **`OPENAI_API_KEY`** (For OpenAI - `app/api/chat/route.ts`)
 
@@ -1286,7 +1518,15 @@ A multi-layered approach to ensure reliability.
     - Verify variable formatting
     - For Token API, ensure the `path` parameter in `app/api/token-proxy/route.ts` is correctly formed and that all required parameters for the specific external API endpoint are being passed. Check the proxy's server-side logs for details on the outgoing request.
 
-4. **Token API Proxy Issues**
+4. **MCP Connection Issues**
+
+    - **Authentication Failures**: Verify `GRAPH_API_KEY` is correctly set and valid for MCP access
+    - **Connection Timeout**: MCP server may be temporarily unavailable, check The Graph's status page
+    - **Tool Not Found**: Use `listMCPTools` action to verify available tools on the MCP server
+    - **Invalid Parameters**: Ensure correct parameter format (e.g., chain names: 'mainnet', not 'ethereum')
+    - **SSE Connection Issues**: Server-Sent Events transport may fail due to network/proxy issues
+
+5. **Token API Proxy Issues**
     - **Misconfigured URL/Auth**: Double-check `NEXT_PUBLIC_GRAPH_API_URL`, `NEXT_PUBLIC_GRAPH_API_KEY`, and `NEXT_PUBLIC_GRAPH_TOKEN` (and their non-public equivalents if used) in your `.env.local` file.
     - **Path resolution**: Ensure the `path` parameter sent to `/api/token-proxy` correctly maps to the intended external API endpoint.
     - **External API Downtime/Errors**: The external Token API itself might be having issues. Check its status page if available. The proxy should forward error messages from the external API.
