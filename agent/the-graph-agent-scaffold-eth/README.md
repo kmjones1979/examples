@@ -78,7 +78,7 @@ yarn install
 3. Set up environment variables in `.env.local`:
 
 ```bash
-# The Graph Protocol API Key
+# The Graph Protocol API Key (used for both regular GraphQL and MCP functionality)
 GRAPH_API_KEY=your-graph-api-key-here
 
 # OpenAI API Key

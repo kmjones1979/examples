@@ -1,4 +1,5 @@
 import { contractInteractor } from "./agentkit/action-providers/contract-interactor";
+import { graphMCPProvider } from "./agentkit/action-providers/graph-mcp-provider";
 import { SUBGRAPH_ENDPOINTS, graphQuerierProvider } from "./agentkit/action-providers/graph-querier";
 import { tokenApiProvider } from "./agentkit/action-providers/token-api-provider";
 import { agentKitToTools } from "./agentkit/framework-extensions/ai-sdk";
@@ -26,6 +27,7 @@ export async function createAgentKit() {
       walletActionProvider(),
       contractInteractor(foundry.id),
       graphQuerierProvider(),
+      graphMCPProvider(),
       tokenApiProvider(),
     ],
   });
