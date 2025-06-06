@@ -15,7 +15,7 @@ A comprehensive SDK for interacting with The Graph Token API built on Scaffold-E
     - [Data Flow](#data-flow)
 - [Hooks Library](#hooks-library)
     - [Base Hook: useTokenApi](#base-hook-usetokenapi)
-    - [Specialized Hooks](#specialized-hooks)
+    - [Token API Hooks](#token-api-hooks)
         - [useTokenMetadata](#usetokenmetadata)
         - [useTokenBalances](#usetokenbalances)
         - [useTokenHolders](#usetokenholders)
@@ -24,6 +24,13 @@ A comprehensive SDK for interacting with The Graph Token API built on Scaffold-E
         - [useTokenOHLCByContract](#usetokenohlcbycontract)
         - [useTokenPools](#usetokenpools)
         - [useTokenSwaps](#usetokenswaps)
+    - [NFT API Hooks](#nft-api-hooks)
+        - [useNFTCollections](#usenftcollections)
+        - [useNFTItems](#usenftitems)
+        - [useNFTOwnerships](#usenftownerships)
+        - [useNFTActivities](#usenftactivities)
+        - [useNFTHolders](#usenftholders)
+        - [useNFTSales](#usenftSales)
 - [UI Components](#ui-components)
     - [Common Patterns](#common-patterns)
     - [Component Gallery](#component-gallery)
@@ -44,15 +51,18 @@ A comprehensive SDK for interacting with The Graph Token API built on Scaffold-E
 
 ## Overview
 
-This SDK provides a complete toolkit for interacting with The Graph Token API, enabling developers to easily fetch and display token-related data across multiple EVM networks. It's built as part of a Scaffold-ETH 2 application but the hooks and components can be used in any React project.
+This SDK provides a complete toolkit for interacting with The Graph Token API, enabling developers to easily fetch and display both token and NFT data across multiple EVM networks. It's built as part of a Scaffold-ETH 2 application but the hooks and components can be used in any React project.
 
 Key features:
 
-- **React Hooks Library**: Specialized hooks for different token API endpoints
-- **UI Component Collection**: Ready-to-use components for displaying token data
+- **React Hooks Library**: Specialized hooks for token and NFT API endpoints
+- **UI Component Collection**: Ready-to-use components for displaying token and NFT data
 - **API Proxy Integration**: Secure API communication with authentication handling
 - **Multi-Network Support**: Works with Ethereum, Arbitrum, Base, BSC, Optimism, and Polygon
 - **TypeScript Support**: Full type safety with comprehensive interfaces
+- **NFT Support**: Complete NFT data fetching including collections, items, ownerships, activities, and sales
+- **Advanced Filtering**: Time-based filters, contract filters, and pagination support
+- **Authentication Error Handling**: Clear guidance for API setup and troubleshooting
 
 For a detailed guide on how the components and hooks were built, see the [Components Tutorial](TUTORIAL.MD).
 To build the test page step-by-step yourself, follow the [Test Page Workshop](WORKSHOP.MD).
@@ -246,8 +256,9 @@ export const useTokenApi = <DataType, ParamsType = Record<string, any>>(
 - **Auto-Refetching**: Supports auto-refreshing with `refetchInterval`
 - **Error Handling**: Comprehensive error handling and state management
 - **Manual Refetch**: Provides a function to manually trigger refetches
+- **Authentication Error Detection**: Clear guidance for API setup and troubleshooting
 
-### Specialized Hooks
+### Token API Hooks
 
 #### useTokenMetadata
 
@@ -752,6 +763,317 @@ interface Swap {
 }
 ```
 
+### NFT API Hooks
+
+#### useNFTCollections
+
+Fetches NFT collection data for a specific contract address.
+
+**Location**: `packages/nextjs/app/token-api/_hooks/useNFTCollections.ts`
+
+```typescript
+export function useNFTCollections(options: UseNFTCollectionsOptions) {
+    const { contractAddress, network = "mainnet", enabled = true } = options;
+
+    const normalizedContractAddress = normalizeContractAddress(contractAddress);
+    const endpoint = `nft/collections/evm/${normalizedContractAddress}`;
+
+    return useTokenApi<NFTCollection[]>(
+        endpoint,
+        { network_id: network },
+        { skip: !normalizedContractAddress || !enabled }
+    );
+}
+```
+
+**Parameters**:
+
+- `contractAddress`: NFT contract address (required)
+- `network`: Network identifier (default: "mainnet")
+- `enabled`: Whether to enable the query (default: true)
+
+**Response Type**:
+
+```typescript
+interface NFTCollection {
+    token_standard: string;
+    contract: string;
+    contract_creation: string;
+    contract_creator: string;
+    symbol: string;
+    name: string;
+    base_uri?: string;
+    total_supply: number;
+    total_unique_supply?: number;
+    owners: number;
+    total_transfers: number;
+    network_id: NetworkId;
+}
+```
+
+#### useNFTItems
+
+Fetches individual NFT items from a collection.
+
+**Location**: `packages/nextjs/app/token-api/_hooks/useNFTItems.ts`
+
+```typescript
+export function useNFTItems(options: UseNFTItemsOptions) {
+    const {
+        contractAddress,
+        network = "mainnet",
+        enabled = true,
+        ...params
+    } = options;
+
+    const normalizedContractAddress = normalizeContractAddress(contractAddress);
+    const endpoint = `nft/items/evm/${normalizedContractAddress}`;
+
+    return useTokenApi<NFTItem[]>(
+        endpoint,
+        { network_id: network, ...params },
+        { skip: !normalizedContractAddress || !enabled }
+    );
+}
+```
+
+**Parameters**:
+
+- `contractAddress`: NFT contract address (required)
+- `network`: Network identifier
+- `token_id`: Specific token ID to fetch
+- `limit`: Number of results per page
+- `page`: Page number
+- `enabled`: Whether to enable the query
+
+**Response Type**:
+
+```typescript
+interface NFTItem {
+    contract: string;
+    token_id: string;
+    owner: string;
+    token_uri?: string;
+    metadata?: {
+        name?: string;
+        description?: string;
+        image?: string;
+        attributes?: Array<{
+            trait_type: string;
+            value: any;
+        }>;
+    };
+    network_id: NetworkId;
+}
+```
+
+#### useNFTOwnerships
+
+Fetches NFT ownership data for a wallet address.
+
+**Location**: `packages/nextjs/app/token-api/_hooks/useNFTOwnerships.ts`
+
+```typescript
+export function useNFTOwnerships(options: UseNFTOwnershipsOptions) {
+    const {
+        walletAddress,
+        network = "mainnet",
+        enabled = true,
+        ...params
+    } = options;
+
+    const normalizedWalletAddress = normalizeContractAddress(walletAddress);
+    const endpoint = `nft/ownerships/evm/${normalizedWalletAddress}`;
+
+    return useTokenApi<NFTOwnership[]>(
+        endpoint,
+        { network_id: network, ...params },
+        { skip: !normalizedWalletAddress || !enabled }
+    );
+}
+```
+
+**Parameters**:
+
+- `walletAddress`: Wallet address to check ownership for (required)
+- `network`: Network identifier
+- `contract_address`: Filter by specific NFT contract
+- `limit`: Number of results per page
+- `page`: Page number
+- `enabled`: Whether to enable the query
+
+**Response Type**:
+
+```typescript
+interface NFTOwnership {
+    contract: string;
+    token_id: string;
+    owner: string;
+    balance: string;
+    token_uri?: string;
+    metadata?: {
+        name?: string;
+        description?: string;
+        image?: string;
+    };
+    network_id: NetworkId;
+}
+```
+
+#### useNFTActivities
+
+Fetches NFT activity/transaction history with advanced filtering.
+
+**Location**: `packages/nextjs/app/token-api/_hooks/useNFTActivities.ts`
+
+```typescript
+export function useNFTActivities(options: UseNFTActivitiesOptions | null) {
+    if (!options?.contract_address) {
+        // Contract address is required for NFT Activities API
+        return {
+            data: undefined,
+            isLoading: false,
+            error: "Contract address is required",
+        };
+    }
+
+    const endpoint = "nft/activities/evm";
+    return useTokenApi<NFTActivity[]>(endpoint, options, {
+        skip: !options.contract_address,
+    });
+}
+```
+
+**Parameters**:
+
+- `contract_address`: NFT contract address (required)
+- `network_id`: Network identifier
+- `any`: Filter by any address (from/to/contract)
+- `from_address`: Filter by sender address
+- `to_address`: Filter by recipient address
+- `startTime`: Start timestamp (Unix seconds)
+- `endTime`: End timestamp (Unix seconds)
+- `orderBy`: Sort field ("timestamp")
+- `orderDirection`: Sort direction ("asc" | "desc")
+- `limit`: Number of results per page
+- `page`: Page number
+
+**Response Type**:
+
+```typescript
+interface NFTActivity {
+    "@type": string;
+    timestamp: string;
+    block_num: number;
+    tx_hash: string;
+    contract: string;
+    token_id: string;
+    from: string;
+    to: string;
+    amount: string;
+    network_id: NetworkId;
+}
+```
+
+#### useNFTHolders
+
+Fetches NFT holder information for a specific contract.
+
+**Location**: `packages/nextjs/app/token-api/_hooks/useNFTHolders.ts`
+
+```typescript
+export function useNFTHolders(options: UseNFTHoldersOptions) {
+    const { contractAddress, network = "mainnet", enabled = true } = options;
+
+    const normalizedContractAddress = normalizeContractAddress(contractAddress);
+    const endpoint = `nft/holders/evm/${normalizedContractAddress}`;
+
+    return useTokenApi<NFTHolder[]>(
+        endpoint,
+        { network_id: network },
+        { skip: !normalizedContractAddress || !enabled }
+    );
+}
+```
+
+**Parameters**:
+
+- `contractAddress`: NFT contract address (required)
+- `network`: Network identifier (default: "mainnet")
+- `enabled`: Whether to enable the query (default: true)
+
+**Response Type**:
+
+```typescript
+interface NFTHolder {
+    token_standard: string; // ERC721, ERC1155, etc.
+    address: string; // Holder's wallet address
+    quantity: number; // Number of tokens held
+    unique_tokens: number; // Number of unique tokens held
+    percentage: number; // Percentage of total supply held
+    network_id: NetworkId;
+}
+```
+
+#### useNFTSales
+
+Fetches NFT sales/marketplace data.
+
+**Location**: `packages/nextjs/app/token-api/_hooks/useNFTSales.ts`
+
+```typescript
+export function useNFTSales(options: UseNFTSalesOptions = {}) {
+    const { network, enabled = true, token, ...otherParams } = options;
+
+    // Map 'token' parameter to 'contract' for the API
+    const queryParams: any = {
+        network_id: network,
+        ...otherParams,
+    };
+
+    if (token) {
+        queryParams.contract = token; // API expects 'contract' not 'token'
+    }
+
+    return useTokenApi<NFTSale[]>("nft/sales/evm", queryParams, {
+        skip: !enabled,
+    });
+}
+```
+
+**Parameters**:
+
+- `network`: Network identifier
+- `any`: Filter by any address involved
+- `offerer`: Seller address
+- `recipient`: Buyer address
+- `token`: NFT contract address (mapped to 'contract' for API)
+- `startTime`: Start timestamp (Unix seconds)
+- `endTime`: End timestamp (Unix seconds)
+- `orderBy`: Sort field ("timestamp")
+- `orderDirection`: Sort direction ("asc" | "desc")
+- `limit`: Number of results per page
+- `page`: Page number
+- `enabled`: Whether to enable the query
+
+**Response Type**:
+
+```typescript
+interface NFTSale {
+    timestamp: string;
+    block_num: number;
+    tx_hash: string;
+    token: string;
+    token_id: number;
+    symbol: string;
+    name: string;
+    offerer: string;
+    recipient: string;
+    sale_amount: number;
+    sale_currency: string;
+}
+```
+
 ## UI Components
 
 ### Common Patterns
@@ -770,6 +1092,8 @@ All components follow these common patterns:
 
 The SDK includes UI components for each data type:
 
+**Token Components:**
+
 - **GetMetadata**: Displays token metadata information
 - **GetBalances**: Shows token balances for an address
 - **GetHolders**: Lists token holders with pagination
@@ -779,15 +1103,28 @@ The SDK includes UI components for each data type:
 - **GetSwaps**: Displays DEX swap events
 - **GetPools**: Lists liquidity pools
 
+**NFT Components:**
+
+- **GetNFTCollections**: Displays NFT collection metadata and statistics
+- **GetNFTItems**: Shows individual NFTs from a collection with metadata
+- **GetNFTOwnerships**: Lists NFTs owned by a wallet address
+- **GetNFTActivities**: Displays NFT transaction history with advanced filtering
+- **GetNFTHolders**: Shows NFT holder information and distribution statistics
+- **GetNFTSales**: Shows NFT marketplace sales data
+
 Example usage:
 
 ```tsx
 import { GetMetadata } from "~~/app/token-api/_components/GetMetadata";
 import { GetBalances } from "~~/app/token-api/_components/GetBalances";
+import { GetNFTCollections } from "~~/app/token-api/_components/GetNFTCollections";
+import { GetNFTOwnerships } from "~~/app/token-api/_components/GetNFTOwnerships";
+import { GetNFTHolders } from "~~/app/token-api/_components/GetNFTHolders";
 
 export default function YourPage() {
     return (
         <div>
+            {/* Token Components */}
             <GetMetadata
                 initialContractAddress="0xc944E90C64B2c07662A292be6244BDf05Cda44a7"
                 initialNetwork="mainnet"
@@ -798,6 +1135,11 @@ export default function YourPage() {
                 initialNetwork="mainnet"
                 isOpen={true}
             />
+
+            {/* NFT Components */}
+            <GetNFTCollections isOpen={true} />
+            <GetNFTOwnerships isOpen={true} />
+            <GetNFTHolders isOpen={true} />
         </div>
     );
 }
@@ -1008,3 +1350,155 @@ export function cleanContractAddress(address?: string): string {
     return cleaned;
 }
 ```
+
+## Type System
+
+### Common Types
+
+**Location**: `packages/nextjs/app/token-api/_types/index.ts`
+
+Defines common types used throughout the SDK:
+
+```typescript
+export type NetworkId =
+    | "mainnet"
+    | "base"
+    | "arbitrum-one"
+    | "bsc"
+    | "optimism"
+    | "matic";
+
+export interface TokenApiOptions {
+    skip?: boolean;
+    refetchInterval?: number;
+}
+
+export interface PaginationInfo {
+    page: number;
+    page_size: number;
+    total_pages: number;
+}
+```
+
+## Example Usage
+
+Visit `http://localhost:3000/token-api` to see a comprehensive example of all components in action.
+
+## API Endpoint References
+
+The SDK covers the following Token API endpoints:
+
+**Token Endpoints:**
+
+- `/tokens/evm/{contract}` - Token metadata
+- `/balances/evm/{address}` - Token balances
+- `/holders/evm/{contract}` - Token holders
+- `/transfers/evm` - Token transfers
+- `/ohlc/pools/evm/{pool}` - Pool OHLC data
+- `/ohlc/prices/evm/{contract}` - Token OHLC data
+- `/pools/evm` - Liquidity pools
+- `/swaps/evm` - DEX swaps
+
+**NFT Endpoints:**
+
+- `/nft/collections/evm/{contract}` - NFT collection data
+- `/nft/items/evm/{contract}` - NFT items
+- `/nft/ownerships/evm/{address}` - NFT ownerships
+- `/nft/activities/evm` - NFT activities
+- `/nft/holders/evm/{contract}` - NFT holders
+- `/nft/sales/evm` - NFT sales
+
+## Recent Updates & Fixes
+
+**Major Improvements in Latest Version:**
+
+- **Authentication Fix**: All APIs now properly handle authentication with comprehensive error messages
+- **Data Structure Normalization**: Hooks return arrays directly (`NFTCollection[]`) instead of nested response objects
+- **NFT Activities Requirements**: Contract address is now a required parameter with proper validation
+- **Time Filtering**: Automatic 30-day time ranges prevent database timeouts on popular contracts
+- **Interface Completeness**: Added missing fields like `token_standard` and `total_unique_supply` to NFT interfaces
+- **Error Handling**: Enhanced error detection for authentication, validation, and timeout issues
+
+**Breaking Changes:**
+
+- Hook return types changed from `{data: T[]}` to `T[]` directly
+- NFT Activities API requires `contract_address` parameter (no longer optional)
+- Time filtering now uses default ranges to prevent timeouts
+
+## Troubleshooting
+
+### Authentication Issues
+
+**Problem**: Getting 401 unauthorized errors
+**Solution**:
+
+1. Ensure you have a valid Graph API token from [The Graph Market](https://thegraph.com/market/)
+2. Add the token to your `.env.local` file:
+    ```env
+    NEXT_PUBLIC_GRAPH_TOKEN=your_token_here
+    ```
+3. Restart your development server after adding the token
+4. Check the browser console for authentication error messages
+
+### Data Structure Issues
+
+**Problem**: Components showing "No valid data found" despite successful API responses
+**Solution**:
+
+- This was resolved in recent updates where hooks now return data arrays directly
+- Ensure you're using the latest version of the hooks
+- Check that components use `Array.isArray(data)` instead of `data?.data`
+- All hooks now return proper array types (e.g., `NFTCollection[]`, `NFTItem[]`) instead of wrapper objects
+
+### NFT Activities API Issues
+
+**Problem**: Getting 400 errors with "contract field validation" messages
+**Solution**:
+
+- The NFT Activities API requires a contract address parameter
+- Ensure you provide a valid NFT contract address (not just a wallet address)
+- Use time filters to prevent database timeouts on popular contracts
+- Contract address is now a required parameter with proper validation
+
+### Database Timeout Issues
+
+**Problem**: Getting 500 errors with "Query took too long" messages
+**Solution**:
+
+- Add time filters (startTime and endTime) to your queries
+- Use the provided time range buttons (Last 24h, Last 7 days, etc.)
+- Popular NFT contracts like BAYC require time filtering to avoid timeouts
+- Default 30-day time ranges are now automatically applied to prevent timeouts
+
+### Network Connection Issues
+
+**Problem**: Fetch errors or network timeouts
+**Solution**:
+
+1. Check your internet connection
+2. Verify the API URL is correct in your `.env.local`
+3. Check if The Graph Token API service is operational
+4. Try with a different network (mainnet, base, etc.)
+
+### Type Errors
+
+**Problem**: TypeScript errors about missing properties
+**Solution**:
+
+- Ensure you're using the correct interfaces from `_types` directory
+- Check that hook return types match what your component expects
+- Some API responses may have optional fields - use optional chaining (`?.`)
+
+### Component Not Loading
+
+**Problem**: Components appear but don't fetch data
+**Solution**:
+
+1. Check that the `enabled` or `skip` parameters are set correctly
+2. Verify that required parameters (like contract addresses) are provided
+3. Check the browser console for error messages
+4. Ensure the component's `shouldFetch` state is properly managed
+
+## Contributing
+
+Contributions are welcome! Please read the contributing guidelines and submit pull requests for any improvements.

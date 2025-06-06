@@ -47,20 +47,30 @@ The `@token-api-scaffold-eth` project provides a robust set of React hooks for i
 - **Returns:** `{ data, isLoading, error, refetch, lastUpdated }`
 
 ### Specialized Hooks
-Each specialized hook wraps `useTokenApi` for a specific data type or endpoint. Common hooks include:
-- `useTokenMetadata`
-- `useTokenBalances`
-- `useTokenHolders`
-- `useTokenTransfers`
-- `useTokenOHLCByPool`
-- `useTokenOHLCByContract`
-- `useTokenPools`
-- `useTokenSwaps`
-- `useHistoricalBalances`
+Each specialized hook wraps `useTokenApi` for a specific data type or endpoint.
+
+#### Token API Hooks:
+- `useTokenMetadata` - Token contract metadata and market data
+- `useTokenBalances` - Wallet token balances 
+- `useTokenHolders` - Token holder information with pagination
+- `useTokenTransfers` - Token transfer history and filtering
+- `useTokenOHLCByPool` - Price charts for liquidity pools
+- `useTokenOHLCByContract` - Price charts for token contracts
+- `useTokenPools` - Liquidity pool information
+- `useTokenSwaps` - DEX swap events and data
+- `useHistoricalBalances` - Historical token balance data
+
+#### NFT API Hooks:
+- `useNFTCollections` - NFT collection metadata and statistics
+- `useNFTItems` - Individual NFT items from collections
+- `useNFTOwnerships` - NFT ownership data for wallets
+- `useNFTActivities` - NFT transaction history (requires contract address)
+- `useNFTSales` - NFT marketplace sales data
 
 #### Example Usage in a React Component
 ```tsx
 import {
+  // Token API Hooks
   useTokenMetadata,
   useTokenBalances,
   useTokenHolders,
@@ -70,13 +80,20 @@ import {
   useTokenPools,
   useTokenSwaps,
   useHistoricalBalances,
+  // NFT API Hooks
+  useNFTCollections,
+  useNFTItems,
+  useNFTOwnerships,
+  useNFTActivities,
+  useNFTSales,
 } from "~~/app/token-api/_hooks";
 
-const contractAddress = "0x...";
+const contractAddress = "0x..."; // Token or NFT contract
 const walletAddress = "0x...";
 const poolAddress = "0x...";
 const networkId = "mainnet";
 
+// Token API Examples
 const { data: metadata, isLoading: loadingMetadata } = useTokenMetadata(contractAddress, { network_id: networkId });
 const { data: balances } = useTokenBalances(walletAddress, { network_id: networkId });
 const { data: holders } = useTokenHolders(contractAddress, { network_id: networkId });
@@ -86,6 +103,18 @@ const { data: ohlcByContract } = useTokenOHLCByContract({ contract: contractAddr
 const { data: pools } = useTokenPools({ network_id: networkId });
 const { data: swaps } = useTokenSwaps({ network_id: networkId, pool: poolAddress });
 const { data: historicalBalances } = useHistoricalBalances(walletAddress, { network_id: networkId });
+
+// NFT API Examples
+const { data: nftCollections } = useNFTCollections({ contractAddress, network: networkId });
+const { data: nftItems } = useNFTItems({ contractAddress, network: networkId, limit: 10 });
+const { data: nftOwnerships } = useNFTOwnerships({ walletAddress, network: networkId });
+const { data: nftActivities } = useNFTActivities({ 
+  contract_address: contractAddress, // Required for NFT Activities
+  network_id: networkId,
+  startTime: Math.floor((Date.now() - 7*24*60*60*1000) / 1000), // Last 7 days
+  endTime: Math.floor(Date.now() / 1000)
+});
+const { data: nftSales } = useNFTSales({ network: networkId, token: contractAddress });
 ```
 
 #### Common Patterns
@@ -93,7 +122,17 @@ const { data: historicalBalances } = useHistoricalBalances(walletAddress, { netw
 - Use the `skip` option to conditionally fetch data.
 - Use `refetchInterval` for polling.
 - Pass relevant parameters (addresses, network IDs, etc.) as arguments.
+- All hooks return arrays directly (no nested `data.data` structure).
+- NFT Activities hook requires `contract_address` parameter.
+- Use time filtering for popular contracts to prevent database timeouts.
 - See `WORKSHOP.MD` and `README.md` for more advanced usage and patterns.
+
+#### Key Troubleshooting Tips
+- **Authentication Issues:** Ensure `NEXT_PUBLIC_GRAPH_TOKEN` or `NEXT_PUBLIC_GRAPH_API_KEY` is set in `.env.local`
+- **No Data Found:** Check that hook returns arrays directly, not nested in `data.data`
+- **Database Timeouts:** Use time filters, especially for popular NFT contracts like BAYC
+- **NFT Activities 400 Errors:** Ensure `contract_address` parameter is provided (required)
+- **Parameter Validation:** Check TypeScript errors for required vs optional parameters
 
 ---
 
@@ -107,16 +146,26 @@ The `@token-api` package provides a comprehensive toolkit for building blockchai
 
 ### 2. UI Components
 - Prebuilt React components for displaying blockchain data:
-  - `GetBalances`
-  - `GetHolders`
-  - `GetTransfers`
-  - `GetMetadata`
-  - `GetHistorical`
-  - `GetOHLCByPool`
-  - `GetOHLCByContract`
-  - `GetPools`
-  - `GetSwaps`
-- These components provide ready-to-use UIs for common blockchain data queries and visualizations.
+
+#### Token Components:
+  - `GetBalances` - Display wallet token balances
+  - `GetHolders` - Show token holder information
+  - `GetTransfers` - Token transfer history with filtering
+  - `GetMetadata` - Token contract metadata display
+  - `GetHistorical` - Historical token balance visualization
+  - `GetOHLCByPool` - Price charts for liquidity pools
+  - `GetOHLCByContract` - Price charts for token contracts
+  - `GetPools` - Liquidity pool data and metrics
+  - `GetSwaps` - DEX swap transaction display
+
+#### NFT Components:
+  - `GetNFTCollections` - NFT collection metadata and statistics
+  - `GetNFTItems` - Individual NFT items from collections
+  - `GetNFTOwnerships` - NFT ownership data for wallets
+  - `GetNFTActivities` - NFT transaction history (requires contract address)
+  - `GetNFTSales` - NFT marketplace sales data
+
+- These components provide ready-to-use UIs for common blockchain data queries and visualizations with advanced filtering, pagination, and time range controls.
 
 ### 3. Type Definitions
 - Centralized TypeScript types for all API responses and data models, ensuring type safety and autocompletion in your app.
@@ -132,5 +181,31 @@ The `@token-api` package provides a comprehensive toolkit for building blockchai
 
 ### 7. Historical Data
 - The `GetHistorical` component and `useHistoricalBalances` hook provide advanced querying and visualization of historical token balances, with support for time intervals, pagination, and filtering.
+
+### 8. NFT Data Support
+- Complete NFT ecosystem support with 5 specialized hooks and components
+- NFT collection metadata, item details, ownership tracking, activities, and sales data
+- Advanced filtering by contract address, wallet address, time ranges, and transaction types
+- Pagination and sorting for large NFT datasets
+
+### 9. Authentication & Error Handling
+- Automatic detection of missing API credentials with helpful error messages
+- Robust error handling for network issues, rate limits, and invalid parameters
+- Clear validation messages for required parameters (e.g., contract addresses for NFT Activities)
+- Retry mechanisms and loading state management
+
+### 10. Performance Optimizations
+- Time filtering to prevent database timeouts on popular contracts
+- Quick time range buttons (Last 24h, Last 7 days, Last 30 days)
+- Pagination controls for large datasets
+- Efficient data structure handling and type safety
+- Warning messages for potentially slow queries
+
+### 11. Developer Experience
+- Comprehensive TypeScript support with proper type definitions
+- Consistent hook patterns across all endpoints
+- Clear parameter validation and error messages
+- Extensive documentation and examples
+- Workshop tutorials and troubleshooting guides
 
 ---

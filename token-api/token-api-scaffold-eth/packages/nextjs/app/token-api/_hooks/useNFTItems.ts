@@ -46,7 +46,7 @@ export function useNFTItems(options: UseNFTItemsOptions) {
 
   const endpoint = `nft/items/evm/contract/${contractAddress}/token_id/${tokenId}`;
 
-  return useTokenApi<NFTItemsResponse>(
+  return useTokenApi<NFTItem[]>(
     endpoint,
     {
       network_id: network,

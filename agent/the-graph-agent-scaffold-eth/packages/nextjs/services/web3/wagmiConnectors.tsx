@@ -13,9 +13,13 @@ import scaffoldConfig from "~~/scaffold.config";
 
 const { onlyLocalBurnerWallet, targetNetworks } = scaffoldConfig;
 
+// Check if we're on the server side
+const isServer = typeof window === "undefined";
+
 const wallets = [
   metaMaskWallet,
-  walletConnectWallet,
+  // Only include WalletConnect on client side to prevent SSR issues
+  ...(!isServer ? [walletConnectWallet] : []),
   ledgerWallet,
   coinbaseWallet,
   rainbowWallet,

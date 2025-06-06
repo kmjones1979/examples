@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Hook for fetching NFT collection data from The Graph Token API
+ * Hook for fetching NFT holders data from The Graph Token API
  *
  * IMPORTANT: This hook requires authentication to work properly.
  *
@@ -18,23 +18,17 @@
 import type { NetworkId } from "./useTokenApi";
 import { useTokenApi } from "./useTokenApi";
 
-export interface NFTCollection {
+export interface NFTHolder {
   token_standard: string; // ERC721, ERC1155, etc.
-  contract: string;
-  contract_creation: string;
-  contract_creator: string;
-  symbol: string;
-  name: string;
-  base_uri?: string; // Optional as per schema example, not in required list
-  total_supply: number;
-  total_unique_supply?: number; // Added based on the documentation example
-  owners: number;
-  total_transfers: number;
+  address: string; // Holder's wallet address
+  quantity: number; // Number of tokens held
+  unique_tokens: number; // Number of unique tokens held
+  percentage: number; // Percentage of total supply held
   network_id: NetworkId;
 }
 
-export interface NFTCollectionsResponse {
-  data: NFTCollection[];
+export interface NFTHoldersResponse {
+  data: NFTHolder[];
   statistics?: {
     elapsed?: number;
     rows_read?: number;
@@ -42,24 +36,8 @@ export interface NFTCollectionsResponse {
   };
 }
 
-// The actual API response structure (for reference)
-export interface NFTCollectionsAPIResponse {
-  data: NFTCollection[];
-  statistics?: {
-    elapsed?: number;
-    rows_read?: number;
-    bytes_read?: number;
-  };
-  pagination?: {
-    offset?: number;
-    limit?: number;
-  };
-  results?: number;
-  total_results?: number;
-}
-
-export interface UseNFTCollectionsOptions {
-  contractAddress: string; // Changed from contract to contractAddress for clarity
+export interface UseNFTHoldersOptions {
+  contractAddress: string; // NFT contract address
   network?: NetworkId;
   enabled?: boolean;
 }
@@ -82,16 +60,16 @@ function normalizeContractAddress(address: string): string {
 }
 
 /**
- * React hook to get NFT collections for a specific contract
+ * React hook to get NFT holders for a specific contract
  */
-export function useNFTCollections(options: UseNFTCollectionsOptions) {
+export function useNFTHolders(options: UseNFTHoldersOptions) {
   const { contractAddress, network = "mainnet", enabled = true } = options;
 
   const normalizedContractAddress = normalizeContractAddress(contractAddress);
 
-  const endpoint = `nft/collections/evm/${normalizedContractAddress}`;
+  const endpoint = `nft/holders/evm/${normalizedContractAddress}`;
 
-  const result = useTokenApi<NFTCollection[]>(
+  const result = useTokenApi<NFTHolder[]>(
     endpoint,
     {
       network_id: network,
@@ -108,7 +86,7 @@ export function useNFTCollections(options: UseNFTCollectionsOptions) {
       normalizedContractAddress.toLowerCase() === "0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb"; // CryptoPunks
 
     if (result.error) {
-      console.error(`🔴 Error fetching NFT collection for ${normalizedContractAddress}:`, result.error);
+      console.error(`🔴 Error fetching NFT holders for ${normalizedContractAddress}:`, result.error);
 
       // Specific error handling for authentication issues
       if (result.error.includes("401") || result.error.includes("unauthorized")) {
@@ -131,8 +109,8 @@ export function useNFTCollections(options: UseNFTCollectionsOptions) {
       }
     } else if (result.data && Array.isArray(result.data) && result.data.length > 0) {
       console.log(
-        `✅ Successfully fetched NFT collection data for ${normalizedContractAddress}:`,
-        result.data[0].name || "Unknown Collection",
+        `✅ Successfully fetched NFT holders data for ${normalizedContractAddress}:`,
+        `${result.data.length} holders found`,
       );
     }
   }

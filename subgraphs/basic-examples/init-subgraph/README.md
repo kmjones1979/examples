@@ -1,4 +1,4 @@
-> **Last updated:** May 2025
+> **Last updated:** June 2025
 
 # Basic Example Subgraph
 

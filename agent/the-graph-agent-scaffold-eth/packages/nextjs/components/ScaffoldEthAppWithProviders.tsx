@@ -9,6 +9,7 @@ import { Toaster } from "react-hot-toast";
 import { WagmiProvider } from "wagmi";
 import { Footer } from "~~/components/Footer";
 import { Header } from "~~/components/Header";
+import { NoSSR } from "~~/components/NoSSR";
 import { BlockieAvatar } from "~~/components/scaffold-eth";
 import { RainbowKitSiweNextAuthProviderWithSession } from "~~/components/scaffold-eth/RainbowKitSiweNextAuthProviderWithSession";
 import { useInitializeNativeCurrencyPrice } from "~~/hooks/scaffold-eth";
@@ -47,18 +48,20 @@ export const ScaffoldEthAppWithProviders = ({ children }: { children: React.Reac
   }, []);
 
   return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitSiweNextAuthProviderWithSession>
-          <ProgressBar height="3px" color="#2299dd" />
-          <RainbowKitProvider
-            avatar={BlockieAvatar}
-            theme={mounted ? (isDarkMode ? darkTheme() : lightTheme()) : lightTheme()}
-          >
-            <ScaffoldEthApp>{children}</ScaffoldEthApp>
-          </RainbowKitProvider>
-        </RainbowKitSiweNextAuthProviderWithSession>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <NoSSR fallback={<div>Loading...</div>}>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitSiweNextAuthProviderWithSession>
+            <ProgressBar height="3px" color="#2299dd" />
+            <RainbowKitProvider
+              avatar={BlockieAvatar}
+              theme={mounted ? (isDarkMode ? darkTheme() : lightTheme()) : lightTheme()}
+            >
+              <ScaffoldEthApp>{children}</ScaffoldEthApp>
+            </RainbowKitProvider>
+          </RainbowKitSiweNextAuthProviderWithSession>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </NoSSR>
   );
 };

@@ -51,8 +51,9 @@ export const GetNFTOwnerships = ({ isOpen = false }: { isOpen?: boolean }) => {
 
     try {
       console.log("OWNERSHIP Received NFT ownerships data from hook:", data);
-      if (data?.data) {
-        setOwnerships(data.data);
+      if (Array.isArray(data) && data.length > 0) {
+        setOwnerships(data);
+        console.log("✅ Successfully processed NFT ownerships:", data.length, "NFTs found");
       } else {
         console.log("No valid ownerships data found in response");
         setOwnerships([]);

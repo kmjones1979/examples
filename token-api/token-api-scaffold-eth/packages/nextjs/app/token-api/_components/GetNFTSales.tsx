@@ -62,8 +62,8 @@ export const GetNFTSales = ({ isOpen = false }: { isOpen?: boolean }) => {
 
     try {
       console.log("🛍️ Received NFT sales data from hook:", data);
-      if (data?.data) {
-        setSales(data.data);
+      if (Array.isArray(data) && data.length > 0) {
+        setSales(data);
       } else {
         console.log("No valid sales data found in response");
         setSales([]);

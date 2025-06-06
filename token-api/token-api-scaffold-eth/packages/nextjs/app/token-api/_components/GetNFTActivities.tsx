@@ -36,19 +36,33 @@ export const GetNFTActivities = ({ isOpen = false }: { isOpen?: boolean }) => {
   const [contractAddress, setContractAddress] = useState<string>("");
   const [selectedActivityType, setSelectedActivityType] = useState<string>("");
 
-  const [startTime, setStartTime] = useState<string>("");
-  const [endTime, setEndTime] = useState<string>("");
+  // Set default time range to last 30 days to prevent timeouts
+  const now = Math.floor(Date.now() / 1000);
+  const thirtyDaysAgo = now - 30 * 24 * 60 * 60;
+
+  const [startTime, setStartTime] = useState<string>(thirtyDaysAgo.toString());
+  const [endTime, setEndTime] = useState<string>(now.toString());
   const [orderBy, setOrderBy] = useState<"timestamp">("timestamp");
   const [orderDirection, setOrderDirection] = useState<"asc" | "desc">("desc");
   const [limit, setLimit] = useState<number>(10);
   const [page, setPage] = useState<number>(1);
 
-  const buildOptions = (): UseNFTActivitiesOptions => {
-    const options: UseNFTActivitiesOptions = { network: selectedNetwork, enabled: shouldFetch, limit, page };
+  const buildOptions = (): UseNFTActivitiesOptions | null => {
+    if (!contractAddress) {
+      return null; // Contract address is required
+    }
+
+    const options: UseNFTActivitiesOptions = {
+      contract_address: contractAddress,
+      network: selectedNetwork,
+      enabled: shouldFetch,
+      limit,
+      page,
+    };
+
     if (anyAddress) options.any = anyAddress;
     if (fromAddress) options.from = fromAddress;
     if (toAddress) options.to = toAddress;
-    if (contractAddress) options.contract_address = contractAddress;
     if (startTime) options.startTime = parseInt(startTime, 10);
     if (endTime) options.endTime = parseInt(endTime, 10);
     if (orderBy) options.orderBy = orderBy;
@@ -57,7 +71,19 @@ export const GetNFTActivities = ({ isOpen = false }: { isOpen?: boolean }) => {
     return options;
   };
 
-  const { data, isLoading: apiLoading, error: apiError, refetch } = useNFTActivities(buildOptions());
+  const options = buildOptions();
+  const {
+    data,
+    isLoading: apiLoading,
+    error: apiError,
+    refetch,
+  } = useNFTActivities(
+    options || {
+      contract_address: "",
+      network: selectedNetwork,
+      enabled: false,
+    },
+  );
 
   useEffect(() => {
     if (apiLoading) {
@@ -74,8 +100,9 @@ export const GetNFTActivities = ({ isOpen = false }: { isOpen?: boolean }) => {
 
     try {
       console.log("📜 Received NFT activities data from hook:", data);
-      if (data?.data) {
-        setActivities(data.data);
+      if (Array.isArray(data) && data.length > 0) {
+        setActivities(data);
+        console.log("✅ Successfully processed NFT activities:", data.length, "activities found");
       } else {
         console.log("No valid activities data found in response");
         setActivities([]);
@@ -110,12 +137,30 @@ export const GetNFTActivities = ({ isOpen = false }: { isOpen?: boolean }) => {
   };
 
   const fetchActivities = async () => {
+    if (!contractAddress) {
+      setError("Please enter a contract address - this field is required for the NFT Activities API");
+      setIsLoading(false);
+      return;
+    }
     setError(null);
     setActivities([]);
     setPage(1);
     setIsLoading(true);
     processingData.current = false;
     setShouldFetch(true);
+  };
+
+  // Helper function to set common time ranges
+  const setTimeRange = (hours: number) => {
+    const endTimestamp = Math.floor(Date.now() / 1000);
+    const startTimestamp = endTimestamp - hours * 60 * 60;
+    setStartTime(startTimestamp.toString());
+    setEndTime(endTimestamp.toString());
+  };
+
+  const clearTimeRange = () => {
+    setStartTime("");
+    setEndTime("");
   };
 
   useEffect(() => {
@@ -157,14 +202,14 @@ export const GetNFTActivities = ({ isOpen = false }: { isOpen?: boolean }) => {
                 </div>
                 <div>
                   <label className="label">
-                    <span className="label-text">Contract Address (Optional)</span>
+                    <span className="label-text">Contract Address (Required)</span>
                   </label>
                   <AddressInput
                     value={contractAddress}
                     onChange={setContractAddress}
-                    placeholder="Filter by contract"
+                    placeholder="NFT contract address (required)"
                   />
-                  <p className="text-sm text-gray-500 mt-1">e.g., 0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D</p>
+                  <p className="text-sm text-gray-500 mt-1">e.g., 0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D (BAYC)</p>
                 </div>
 
                 <div>
@@ -212,21 +257,55 @@ export const GetNFTActivities = ({ isOpen = false }: { isOpen?: boolean }) => {
                     type="number"
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
-                    placeholder="Optional (e.g., 1672531200)"
+                    placeholder="Recommended for performance"
                     className="input input-bordered w-full"
                   />
+                  <p className="text-xs text-warning mt-1">
+                    ⚠️ Time filters prevent database timeouts for popular contracts
+                  </p>
                 </div>
                 <div>
                   <label className="label">
                     <span className="label-text">End Time (Unix Timestamp)</span>
                   </label>
-                  <input
-                    type="number"
-                    value={endTime}
-                    onChange={e => setEndTime(e.target.value)}
-                    placeholder="Optional (e.g., 1675209600)"
-                    className="input input-bordered w-full"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={endTime}
+                      onChange={e => setEndTime(e.target.value)}
+                      placeholder="Recommended for performance"
+                      className="input input-bordered flex-1"
+                    />
+                    <button
+                      className="btn btn-sm btn-outline"
+                      onClick={() => setEndTime(Math.floor(Date.now() / 1000).toString())}
+                      title="Set to current timestamp"
+                    >
+                      Now
+                    </button>
+                  </div>
+                </div>
+                <div className="col-span-full">
+                  <label className="label">
+                    <span className="label-text">Quick Time Ranges</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <button className="btn btn-sm btn-outline" onClick={() => setTimeRange(24)}>
+                      Last 24h
+                    </button>
+                    <button className="btn btn-sm btn-outline" onClick={() => setTimeRange(24 * 7)}>
+                      Last 7 days
+                    </button>
+                    <button className="btn btn-sm btn-outline" onClick={() => setTimeRange(24 * 30)}>
+                      Last 30 days
+                    </button>
+                    <button className="btn btn-sm btn-outline" onClick={() => clearTimeRange()}>
+                      No filter (may timeout)
+                    </button>
+                    <button className="btn btn-sm btn-info" onClick={() => setTimeRange(24 * 30)}>
+                      Reset to 30 days
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="label">
@@ -285,7 +364,7 @@ export const GetNFTActivities = ({ isOpen = false }: { isOpen?: boolean }) => {
                 <button
                   className={`btn btn-primary ${isLoading ? "loading" : ""}`}
                   onClick={fetchActivities}
-                  disabled={isLoading}
+                  disabled={isLoading || !contractAddress}
                 >
                   {isLoading ? "Fetching..." : "Fetch Activities"}
                 </button>

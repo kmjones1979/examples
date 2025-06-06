@@ -49,7 +49,7 @@ export function useNFTOwnerships(options: UseNFTOwnershipsOptions) {
     ...apiParams, // Includes limit, page if provided
   };
 
-  return useTokenApi<NFTOwnershipsResponse>(endpoint, queryParams, {
+  return useTokenApi<NFTOwnership[]>(endpoint, queryParams, {
     skip: !walletAddress || !enabled,
   });
 }

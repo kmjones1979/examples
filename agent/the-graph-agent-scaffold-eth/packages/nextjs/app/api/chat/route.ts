@@ -39,7 +39,12 @@ export async function POST(req: Request) {
   You have access to several tools:
   1. The chat app has a built-in block explorer so you can link to (for example) /blockexplorer/transaction/<transaction-hash>
   2. You can query The Graph protocol subgraphs using the querySubgraph action
-  3. You can check balances using the contract interactor:
+  3. You can use The Graph's MCP (Model Context Protocol) for advanced subgraph discovery and querying:
+     - searchSubgraphs: Find relevant subgraphs by keyword
+     - getContractSubgraphs: Find subgraphs that index a specific contract
+     - getSubgraphSchema: Get the schema for a subgraph to understand available data
+     - executeMCPQuery: Execute GraphQL queries through MCP
+  4. You can check balances using the contract interactor:
      - For native token balance: Use the "getBalance" action with the user's address
      - For ERC20 token balances: Use the "getBalance" action with the token contract address and user's address
 

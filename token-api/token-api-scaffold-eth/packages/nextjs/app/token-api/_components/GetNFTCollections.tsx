@@ -41,10 +41,12 @@ export const GetNFTCollections = ({ isOpen = true }: { isOpen?: boolean }) => {
 
     try {
       console.log("🎨 Received NFT collections data from hook:", data);
-      if (data?.data) {
-        setCollections(data.data);
+      // The useTokenApi hook already extracts the data array from the API response
+      if (Array.isArray(data) && data.length > 0) {
+        setCollections(data);
+        console.log("✅ Successfully processed NFT collections:", data.length, "collections found");
       } else {
-        console.log("No valid collections data found in response");
+        console.log("No valid collections data found in response. Data structure:", typeof data, data);
         setCollections([]);
       }
     } catch (err) {

@@ -6,6 +6,7 @@ import { GetHolders } from "./_components/GetHolders";
 import { GetMetadata } from "./_components/GetMetadata";
 import { GetNFTActivities } from "./_components/GetNFTActivities";
 import { GetNFTCollections } from "./_components/GetNFTCollections";
+import { GetNFTHolders } from "./_components/GetNFTHolders";
 import { GetNFTItems } from "./_components/GetNFTItems";
 import { GetNFTOwnerships } from "./_components/GetNFTOwnerships";
 import { GetNFTSales } from "./_components/GetNFTSales";
@@ -58,6 +59,7 @@ export default function TokenAPI() {
         <h2 className="text-3xl font-bold text-center mb-6">NFT API Showcase</h2>
       </div>
       <GetNFTCollections isOpen={false} />
+      <GetNFTHolders isOpen={false} />
       <GetNFTItems isOpen={false} />
       <GetNFTOwnerships isOpen={false} />
       <GetNFTActivities isOpen={false} />
