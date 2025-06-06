@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Token-API NFT Demo</title>
+  </head>
+  <body>
+    <header style="max-width:960px;margin:0 auto;padding:24px;font-family:sans-serif;">
+      <h1 style="margin-top:0">NFT Portfolio Dashboard (Demo)</h1>
+      <p>All data is fetched from The Graph's Token&nbsp;API.  
+        Read the API <a href="https://token-api.thegraph.com/#tag/evm" target="_blank" rel="noopener">here</a> and the Quickstart guide <a href="https://thegraph.com/docs/en/token-api/quick-start/" target="_blank" rel="noopener">here</a>.
+      </p>
+      <p style="font-size:0.9rem;color:#555;">Use these example addresses to try the widgets. More chains will be added soon — currently only Ethereum Mainnet is supported.</p>
+      <ul style="font-size:0.9rem;">
+        <li><strong>Wallet NFT Explorer example EOA:</strong> 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045</li>
+        <li><strong>NFT Collection Explorer example contract:</strong> 0xbd3531da5cf5857e7cfaa92426877b022e612cf8</li>
+      </ul>
+      <p style="font-size:0.8rem;color:#666;">Copy any component from <code>/components</code> into your own project and provide your JWT key from <a href="https://marketplace.thegraph.com/" target="_blank" rel="noopener">The&nbsp;Graph Marketplace</a> in <code>.env</code>.</p>
+      <hr style="margin:32px 0;" />
+    </header>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html> 
