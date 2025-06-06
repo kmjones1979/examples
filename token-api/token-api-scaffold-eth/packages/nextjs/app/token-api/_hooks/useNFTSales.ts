@@ -53,13 +53,19 @@ export function useNFTSales(options: UseNFTSalesOptions = {}) {
 
   const endpoint = "nft/sales/evm";
 
-  // Prepare query parameters
+  // Prepare query parameters - map 'token' to 'contract' for API
+  const { token, ...otherParams } = apiParams;
   const queryParams: any = {
     network_id: network,
-    ...apiParams,
+    ...otherParams,
   };
 
-  return useTokenApi<NFTSalesResponse>(endpoint, queryParams, {
+  // Map token field to contract for the API
+  if (token) {
+    queryParams.contract = token;
+  }
+
+  return useTokenApi<NFTSale[]>(endpoint, queryParams, {
     skip: !enabled,
   });
 }

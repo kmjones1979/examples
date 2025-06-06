@@ -1,14 +1,14 @@
 # Workshop: Building the Token API Test Page
 
-This workshop guides you through recreating a `WorkshopPage`. This component serves as a comprehensive testbed for all the custom data-fetching hooks developed for The Graph Token API SDK.
+This workshop guides you through recreating a `WorkshopPage`. This component serves as a comprehensive testbed for all the custom data-fetching hooks developed for The Graph Token API SDK, including both traditional token hooks and NFT hooks.
 
-**Goal**: To understand how to integrate and use the various Token API hooks within a React component, manage their state, handle parameters, and observe the results.
+**Goal**: To understand how to integrate and use the various Token API hooks (both token and NFT) within a React component, manage their state, handle parameters, and observe the results.
 
 ## Prerequisites
 
--   A working Scaffold-ETH 2 + Token API SDK setup (as per the main `README.md`).
--   Familiarity with React, TypeScript, and React Hooks (`useState`, `useEffect`).
--   Node.js and Yarn installed.
+- A working Scaffold-ETH 2 + Token API SDK setup (as per the main `README.md`).
+- Familiarity with React, TypeScript, and React Hooks (`useState`, `useEffect`).
+- Node.js and Yarn installed.
 
 ## Steps
 
@@ -35,6 +35,11 @@ This workshop guides you through recreating a `WorkshopPage`. This component ser
         useTokenPools,
         useTokenSwaps,
         useTokenTransfers,
+        useNFTCollections,
+        useNFTItems,
+        useNFTOwnerships,
+        useNFTActivities,
+        useNFTSales,
     } from "~~/app/token-api/_hooks";
     import type { NetworkId } from "~~/app/token-api/_types";
     import { AddressInput } from "~~/components/scaffold-eth";
@@ -111,7 +116,12 @@ type LoggedKeys =
     | "ohlcByContract"
     | "pools"
     | "swaps"
-    | "historicalBalances";
+    | "historicalBalances"
+    | "nftCollections"
+    | "nftItems"
+    | "nftOwnerships"
+    | "nftActivities"
+    | "nftSales";
 const [logged, setLogged] = useState<Partial<Record<LoggedKeys, boolean>>>({});
 ```
 
@@ -211,6 +221,74 @@ const {
     to_timestamp: historicalBalancesToTs,
     resolution: "day",
 });
+
+// --- NFT Hooks ---
+
+// --- NFTCollections Hook ---
+const {
+    data: nftCollectionsData,
+    isLoading: isLoadingNFTCollections,
+    error: errorNFTCollections,
+} = useNFTCollections({
+    contractAddress: contractAddress,
+    network: selectedNetwork,
+    enabled: timestampsReady,
+});
+
+// --- NFTItems Hook ---
+const {
+    data: nftItemsData,
+    isLoading: isLoadingNFTItems,
+    error: errorNFTItems,
+} = useNFTItems({
+    contractAddress: contractAddress,
+    network: selectedNetwork,
+    limit: 10,
+    enabled: timestampsReady,
+});
+
+// --- NFTOwnerships Hook ---
+const {
+    data: nftOwnershipsData,
+    isLoading: isLoadingNFTOwnerships,
+    error: errorNFTOwnerships,
+} = useNFTOwnerships({
+    walletAddress: walletAddress,
+    network: selectedNetwork,
+    limit: 10,
+    enabled: timestampsReady,
+});
+
+// --- NFTActivities Hook ---
+const {
+    data: nftActivitiesData,
+    isLoading: isLoadingNFTActivities,
+    error: errorNFTActivities,
+} = useNFTActivities(
+    contractAddress
+        ? {
+              contract_address: contractAddress,
+              network_id: selectedNetwork,
+              any: walletAddress, // Optional: Filter by wallet address
+              startTime: historicalBalancesFromTs,
+              endTime: historicalBalancesToTs,
+              limit: 10,
+          }
+        : null
+);
+
+// --- NFTSales Hook ---
+const {
+    data: nftSalesData,
+    isLoading: isLoadingNFTSales,
+    error: errorNFTSales,
+} = useNFTSales({
+    network: selectedNetwork,
+    token: contractAddress, // NFT contract address
+    offerer: walletAddress, // Optional: Filter by seller
+    limit: 10,
+    enabled: timestampsReady,
+});
 ```
 
 _Remember: These hooks fetch data automatically when the component mounts or when their dependencies (like `selectedNetwork`, `contractAddress`, etc.) change._
@@ -262,6 +340,63 @@ useEffect(() => {
     errorHistoricalBalances,
     logged,
 ]);
+
+// --- NFT useEffects ---
+
+useEffect(() => {
+    if (!logged.nftCollections && nftCollectionsData !== undefined) {
+        console.log("useNFTCollections:", {
+            data: nftCollectionsData,
+            isLoading: isLoadingNFTCollections,
+            error: errorNFTCollections,
+        });
+        setLogged((l) => ({ ...l, nftCollections: true }));
+    }
+}, [nftCollectionsData, isLoadingNFTCollections, errorNFTCollections, logged]);
+
+useEffect(() => {
+    if (!logged.nftItems && nftItemsData !== undefined) {
+        console.log("useNFTItems:", {
+            data: nftItemsData,
+            isLoading: isLoadingNFTItems,
+            error: errorNFTItems,
+        });
+        setLogged((l) => ({ ...l, nftItems: true }));
+    }
+}, [nftItemsData, isLoadingNFTItems, errorNFTItems, logged]);
+
+useEffect(() => {
+    if (!logged.nftOwnerships && nftOwnershipsData !== undefined) {
+        console.log("useNFTOwnerships:", {
+            data: nftOwnershipsData,
+            isLoading: isLoadingNFTOwnerships,
+            error: errorNFTOwnerships,
+        });
+        setLogged((l) => ({ ...l, nftOwnerships: true }));
+    }
+}, [nftOwnershipsData, isLoadingNFTOwnerships, errorNFTOwnerships, logged]);
+
+useEffect(() => {
+    if (!logged.nftActivities && nftActivitiesData !== undefined) {
+        console.log("useNFTActivities:", {
+            data: nftActivitiesData,
+            isLoading: isLoadingNFTActivities,
+            error: errorNFTActivities,
+        });
+        setLogged((l) => ({ ...l, nftActivities: true }));
+    }
+}, [nftActivitiesData, isLoadingNFTActivities, errorNFTActivities, logged]);
+
+useEffect(() => {
+    if (!logged.nftSales && nftSalesData !== undefined) {
+        console.log("useNFTSales:", {
+            data: nftSalesData,
+            isLoading: isLoadingNFTSales,
+            error: errorNFTSales,
+        });
+        setLogged((l) => ({ ...l, nftSales: true }));
+    }
+}, [nftSalesData, isLoadingNFTSales, errorNFTSales, logged]);
 ```
 
 _Make sure to add a similar `useEffect` block for **every** data-fetching hook initialized in Step 3._
@@ -418,10 +553,20 @@ Inside the `return` statement of the `WorkshopPage` component, add the UI elemen
 
 Congratulations! You have successfully recreated the `TestPage` component, demonstrating how to use the Token API SDK's custom hooks. You've learned how to:
 
--   Set up state for hook parameters.
--   Initialize and use multiple data-fetching hooks in a single component.
--   Control hook execution timing (e.g., enabling based on parameter readiness).
--   Manage and observe console output effectively.
--   Build a simple UI to interact with the hooks.
+- Set up state for hook parameters.
+- Initialize and use multiple data-fetching hooks in a single component.
+- Control hook execution timing (e.g., enabling based on parameter readiness).
+- Manage and observe console output effectively.
+- Build a simple UI to interact with the hooks.
 
-This workshop provides a solid foundation for integrating these hooks into your own custom components and applications within the Scaffold-ETH 2 environment. Remember to consult the hook definitions and `_types` directory for detailed parameter options and response structures.
+This workshop provides a solid foundation for integrating both token and NFT hooks into your own custom components and applications within the Scaffold-ETH 2 environment.
+
+**Key Takeaways:**
+
+- Token hooks work with traditional ERC20 data (balances, transfers, prices)
+- NFT hooks provide comprehensive NFT functionality (collections, items, ownerships, activities, sales)
+- Some NFT hooks (like NFT Activities) require specific parameters (contract addresses)
+- Time filtering is crucial for preventing database timeouts on popular contracts
+- All hooks now return arrays directly, eliminating data structure confusion
+
+Remember to consult the hook definitions and `_types` directory for detailed parameter options and response structures. Check the main README.md for troubleshooting common issues like authentication errors and database timeouts.

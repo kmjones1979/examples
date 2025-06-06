@@ -32,10 +32,10 @@ export interface NFTActivitiesResponse {
 export interface UseNFTActivitiesOptions {
   network?: NetworkId;
   enabled?: boolean;
+  contract_address: string; // REQUIRED: NFT contract address - renamed from 'contract' to avoid conflict, will be mapped
   any?: string; // Filter by any address involved (from, to, contract)
   from?: string;
   to?: string;
-  contract_address?: string; // Renamed from 'contract' to avoid conflict, will be mapped
   token_id?: string; // This was in the old options, but not in new schema for activities endpoint. Retaining for now, but will not be passed to API.
   type?: string[]; // This was in the old options, API uses "@type". This will need to be handled or removed.
   startTime?: number;
@@ -50,7 +50,7 @@ export interface UseNFTActivitiesOptions {
 /**
  * React hook to get NFT activities
  */
-export function useNFTActivities(options: UseNFTActivitiesOptions = {}) {
+export function useNFTActivities(options: UseNFTActivitiesOptions) {
   const { network, enabled = true, contract_address, token_id, type, ...apiParams } = options;
 
   const endpoint = "nft/activities/evm";
@@ -72,7 +72,7 @@ export function useNFTActivities(options: UseNFTActivitiesOptions = {}) {
   // These will be ignored for the API call if not handled specifically.
   // For simplicity, they are currently ignored.
 
-  return useTokenApi<NFTActivitiesResponse>(endpoint, queryParams, {
-    skip: !enabled,
+  return useTokenApi<NFTActivity[]>(endpoint, queryParams, {
+    skip: !enabled || !contract_address,
   });
 }
