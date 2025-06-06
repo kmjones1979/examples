@@ -1,4 +1,4 @@
-> **Last updated:** 2022-12-09
+> **Last updated:** June 2025
 
 ## Getting started
 
