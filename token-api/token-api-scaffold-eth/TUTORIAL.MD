@@ -1,6 +1,6 @@
 # Token API Components Tutorial
 
-This tutorial explains how the Token API components in the `packages/nextjs/app/token-api/_components` directory were built using custom hooks and Scaffold-ETH 2 (SE-2) utilities.
+This tutorial explains how the Token API components in the `packages/nextjs/app/token-api/_components` directory were built using custom hooks and Scaffold-ETH 2 (SE-2) utilities. It covers both traditional token data and NFT data fetching.
 
 ## Architecture Overview
 
@@ -14,10 +14,10 @@ The token-api components are built using a layered approach:
 
 `useTokenApi` is the core hook that handles all API communication, providing consistent error handling, loading states, and data formatting. It's designed as a generic hook that:
 
--   Makes fetch requests to the token API proxy endpoint
--   Handles loading and error states
--   Supports pagination and interval-based refetching
--   Normalizes API responses
+- Makes fetch requests to the token API proxy endpoint
+- Handles loading and error states
+- Supports pagination and interval-based refetching
+- Normalizes API responses
 
 ```typescript
 export const useTokenApi = <DataType, ParamsType = Record<string, any>>(
@@ -74,15 +74,33 @@ export const useTokenMetadata = (
 };
 ```
 
-### Other Specialized Hooks
+### Token API Hooks
 
--   `useTokenBalances`: Used in `GetBalances.tsx` for retrieving token balances
--   `useTokenHolders`: Used in `GetHolders.tsx` for fetching token holder information
--   `useTokenTransfers`: Used in `GetTransfers.tsx` for transaction history (Note: Currently uses balances endpoint as fallback due to API limitations)
--   `useTokenSwaps`: Used in `GetSwaps.tsx` for DEX swap data
--   `useTokenPools`: Used in `GetPools.tsx` for liquidity pool information
--   `useTokenOHLCByPool`: Used in `GetOHLCByPool.tsx` for pool price chart data
--   `useTokenOHLCByContract`: Used in `GetOHLCByContract.tsx` for token price charts
+- `useTokenBalances`: Used in `GetBalances.tsx` for retrieving token balances
+- `useTokenHolders`: Used in `GetHolders.tsx` for fetching token holder information
+- `useTokenTransfers`: Used in `GetTransfers.tsx` for transaction history
+- `useTokenSwaps`: Used in `GetSwaps.tsx` for DEX swap data
+- `useTokenPools`: Used in `GetPools.tsx` for liquidity pool information
+- `useTokenOHLCByPool`: Used in `GetOHLCByPool.tsx` for pool price chart data
+- `useTokenOHLCByContract`: Used in `GetOHLCByContract.tsx` for token price charts
+
+### NFT API Hooks
+
+- `useNFTCollections`: Used in `GetNFTCollections.tsx` for fetching NFT collection metadata
+- `useNFTItems`: Used in `GetNFTItems.tsx` for retrieving individual NFT items
+- `useNFTOwnerships`: Used in `GetNFTOwnerships.tsx` for fetching NFT ownership data
+- `useNFTActivities`: Used in `GetNFTActivities.tsx` for NFT transaction history
+- `useNFTSales`: Used in `GetNFTSales.tsx` for NFT marketplace sales data
+
+### Key Improvements Made
+
+**Data Structure Fix**: All hooks now return arrays directly (e.g., `NFTCollection[]`) instead of response wrapper objects, eliminating the need for components to access `data?.data`.
+
+**Authentication Error Handling**: Enhanced error detection and user guidance for API authentication issues.
+
+**Parameter Validation**: Added proper validation for required parameters (e.g., contract addresses for NFT Activities).
+
+**Time Filtering**: Implemented advanced time filtering with quick-select buttons to prevent database timeouts on popular contracts.
 
 ## Component Implementation Pattern
 
@@ -129,9 +147,9 @@ export const GetMetadata = ({ isOpen = true }: { isOpen?: boolean }) => {
 
 The token-api components leverage SE-2's pre-built components for enhanced UX:
 
--   **Address**: Used to display wallet and contract addresses with ENS support
--   **AddressInput**: Used for user input of Ethereum addresses with validation
--   **Balance**: Used to display token balances in the UI
+- **Address**: Used to display wallet and contract addresses with ENS support
+- **AddressInput**: Used for user input of Ethereum addresses with validation
+- **Balance**: Used to display token balances in the UI
 
 Example from GetMetadata.tsx:
 
@@ -144,6 +162,8 @@ Example from GetMetadata.tsx:
 ```
 
 ## Hook Usage in Each Component
+
+### Token Components
 
 1. **GetMetadata.tsx**
 
@@ -162,9 +182,8 @@ Example from GetMetadata.tsx:
 
 4. **GetTransfers.tsx**
 
-    - Currently uses balances endpoint as a workaround due to API limitations
-    - Originally designed to use `useTokenTransfers` hook
-    - Formats balance data to resemble transfers for UI consistency
+    - Uses `useTokenTransfers` to fetch token transfer history
+    - Implements filtering by wallet and contract addresses
 
 5. **GetSwaps.tsx**
 
@@ -177,14 +196,41 @@ Example from GetMetadata.tsx:
     - Shows TVL and fee tier information
 
 7. **GetOHLCByPool.tsx** and **GetOHLCByContract.tsx**
-
     - Use `useTokenOHLCByPool` and `useTokenOHLCByContract` respectively
     - Implement time interval selection and chart rendering
     - Support different parameter formats based on API requirements
 
-8. **GetHistorical.tsx**
-    - Uses `useTokenHistorical` for historical price and volume data
-    - Formats data for time-series visualization
+### NFT Components
+
+8. **GetNFTCollections.tsx**
+
+    - Uses `useNFTCollections` to fetch NFT collection metadata
+    - Displays collection statistics like total supply, owners, transfers
+    - Includes contract validation and network selection
+
+9. **GetNFTItems.tsx**
+
+    - Uses `useNFTItems` to fetch individual NFT items from a collection
+    - Shows NFT metadata, images, and attributes
+    - Supports filtering by token ID and pagination
+
+10. **GetNFTOwnerships.tsx**
+
+    - Uses `useNFTOwnerships` to fetch NFTs owned by a wallet
+    - Displays owned NFTs with metadata and contract information
+    - Implements contract filtering and pagination
+
+11. **GetNFTActivities.tsx**
+
+    - Uses `useNFTActivities` to fetch NFT transaction history
+    - **Requires contract address** - this is a mandatory parameter
+    - Implements advanced time filtering to prevent database timeouts
+    - Supports filtering by wallet addresses (from/to/any)
+
+12. **GetNFTSales.tsx**
+    - Uses `useNFTSales` to fetch NFT marketplace sales data
+    - Maps `token` parameter to `contract` for API compatibility
+    - Displays sales information including price and marketplace data
 
 ## Testing All Hooks: test/page.tsx
 
@@ -194,16 +240,16 @@ The `packages/nextjs/app/test/page.tsx` component serves as a comprehensive test
 
 The main goal of `TestPage.tsx` is to:
 
--   Instantiate every specialized hook (e.g., `useTokenMetadata`, `useTokenBalances`, etc.).
--   Provide a user interface to dynamically change the common parameters for these hooks (like network, contract addresses, wallet addresses).
--   Automatically fetch data when the component mounts or when these parameters change.
--   Log the data, loading states, and errors for each hook to the browser's console, ensuring each piece of data is logged only once upon arrival.
+- Instantiate every specialized hook (e.g., `useTokenMetadata`, `useTokenBalances`, etc.).
+- Provide a user interface to dynamically change the common parameters for these hooks (like network, contract addresses, wallet addresses).
+- Automatically fetch data when the component mounts or when these parameters change.
+- Log the data, loading states, and errors for each hook to the browser's console, ensuring each piece of data is logged only once upon arrival.
 
 ### 2. State Management
 
 The component utilizes several React `useState` hooks to manage user inputs and component behavior:
 
--   **`selectedNetwork`**:
+- **`selectedNetwork`**:
 
     ```typescript
     const [selectedNetwork, setSelectedNetwork] =
@@ -212,7 +258,7 @@ The component utilizes several React `useState` hooks to manage user inputs and 
 
     Stores the currently selected blockchain network (e.g., "mainnet", "base"). This is used by almost all hooks.
 
--   **`contractAddress`**:
+- **`contractAddress`**:
 
     ```typescript
     const [contractAddress, setContractAddress] = useState<string>(
@@ -222,7 +268,7 @@ The component utilizes several React `useState` hooks to manage user inputs and 
 
     Holds the token contract address, used by hooks like `useTokenMetadata`, `useTokenHolders`, `useTokenOHLCByContract`, and as a filter for `useTokenTransfers`.
 
--   **`walletAddress`**:
+- **`walletAddress`**:
 
     ```typescript
     const [walletAddress, setWalletAddress] = useState<string>(
@@ -232,7 +278,7 @@ The component utilizes several React `useState` hooks to manage user inputs and 
 
     Stores the wallet address, used by `useTokenBalances`, `useTokenTransfers`, and `useHistoricalBalances`.
 
--   **`poolAddress`**:
+- **`poolAddress`**:
 
     ```typescript
     const [poolAddress, setPoolAddress] = useState<string>(
@@ -242,7 +288,7 @@ The component utilizes several React `useState` hooks to manage user inputs and 
 
     Contains the liquidity pool address, used by `useTokenOHLCByPool` and `useTokenSwaps`.
 
--   **`historicalBalancesFromTs` and `historicalBalancesToTs`**:
+- **`historicalBalancesFromTs` and `historicalBalancesToTs`**:
 
     ```typescript
     const [historicalBalancesFromTs, setHistoricalBalancesFromTs] = useState<
@@ -264,7 +310,7 @@ The component utilizes several React `useState` hooks to manage user inputs and 
     }, []);
     ```
 
--   **`logged`**:
+- **`logged`**:
     ```typescript
     const [logged, setLogged] = useState<Partial<Record<LoggedKeys, boolean>>>(
         {}
@@ -278,7 +324,7 @@ All specialized data fetching hooks are initialized in the component. They autom
 
 Here's a brief overview of how each hook is set up:
 
--   **`useTokenMetadata`**:
+- **`useTokenMetadata`**:
 
     ```typescript
     const { data: metadataData, ... } = useTokenMetadata(contractAddress, { network_id: selectedNetwork });
@@ -286,7 +332,7 @@ Here's a brief overview of how each hook is set up:
 
     Fetches metadata for the given `contractAddress` on the `selectedNetwork`.
 
--   **`useTokenBalances`**:
+- **`useTokenBalances`**:
 
     ```typescript
     const { data: balancesData, ... } = useTokenBalances(walletAddress, { network_id: selectedNetwork });
@@ -294,7 +340,7 @@ Here's a brief overview of how each hook is set up:
 
     Fetches token balances for the `walletAddress` on the `selectedNetwork`.
 
--   **`useTokenHolders`**:
+- **`useTokenHolders`**:
 
     ```typescript
     const { data: holdersData, ... } = useTokenHolders(contractAddress, { network_id: selectedNetwork });
@@ -302,7 +348,7 @@ Here's a brief overview of how each hook is set up:
 
     Fetches a list of token holders for the `contractAddress`.
 
--   **`useTokenTransfers`**:
+- **`useTokenTransfers`**:
 
     ```typescript
     const { data: transfersData, ... } = useTokenTransfers(walletAddress, { network_id: selectedNetwork, contract: contractAddress, limit: 100 });
@@ -310,7 +356,7 @@ Here's a brief overview of how each hook is set up:
 
     Fetches token transfers for the `walletAddress`, with an optional filter for `contractAddress` on the `selectedNetwork`.
 
--   **`useTokenOHLCByPool`**:
+- **`useTokenOHLCByPool`**:
 
     ```typescript
     const { data: ohlcByPoolData, ... } = useTokenOHLCByPool(poolAddress, { network_id: selectedNetwork, resolution: "1d" });
@@ -318,7 +364,7 @@ Here's a brief overview of how each hook is set up:
 
     Fetches OHLC (Open, High, Low, Close) price data for the specified `poolAddress`.
 
--   **`useTokenOHLCByContract`**:
+- **`useTokenOHLCByContract`**:
 
     ```typescript
     const { data: ohlcByContractData, ... } = useTokenOHLCByContract({ contract: contractAddress, network: selectedNetwork, timeframe: 86400, limit: 100, enabled: true });
@@ -326,7 +372,7 @@ Here's a brief overview of how each hook is set up:
 
     Fetches OHLC price data for the `contractAddress`.
 
--   **`useTokenPools`**:
+- **`useTokenPools`**:
 
     ```typescript
     const { data: poolsData, ... } = useTokenPools({ network_id: selectedNetwork, token: contractAddress, page_size: 10 });
@@ -334,7 +380,7 @@ Here's a brief overview of how each hook is set up:
 
     Fetches a list of liquidity pools, optionally filtered by `contractAddress` (token).
 
--   **`useTokenSwaps`**:
+- **`useTokenSwaps`**:
 
     ```typescript
     const { data: swapsData, ... } = useTokenSwaps({ network_id: selectedNetwork, pool: poolAddress, page_size: 10 });
@@ -342,7 +388,7 @@ Here's a brief overview of how each hook is set up:
 
     Fetches swap events for the specified `poolAddress`.
 
--   **`useHistoricalBalances`**:
+- **`useHistoricalBalances`**:
     ```typescript
     const { data: historicalBalancesData, ... } = useHistoricalBalances(walletAddress, {
       network_id: selectedNetwork,
@@ -375,11 +421,11 @@ useEffect(() => {
 
 **Explanation**:
 
--   This effect runs when `metadataData`, `isLoadingMetadata`, `errorMetadata`, or `logged` changes.
--   `!logged.metadata`: Checks if the metadata has already been logged.
--   `metadataData !== undefined`: Ensures there's actual data to log.
--   If both conditions are true, it logs the current data, loading, and error status for `useTokenMetadata`.
--   `setLogged(l => ({ ...l, metadata: true }))`: It then updates the `logged` state to mark that `metadata` has been logged, preventing future logs for the same data until `metadataData` itself changes to a new defined value (after perhaps an input change and refetch) and `logged.metadata` would have been reset or handled accordingly if re-logging of new data was desired (though in the current setup, it's a one-time log per data arrival).
+- This effect runs when `metadataData`, `isLoadingMetadata`, `errorMetadata`, or `logged` changes.
+- `!logged.metadata`: Checks if the metadata has already been logged.
+- `metadataData !== undefined`: Ensures there's actual data to log.
+- If both conditions are true, it logs the current data, loading, and error status for `useTokenMetadata`.
+- `setLogged(l => ({ ...l, metadata: true }))`: It then updates the `logged` state to mark that `metadata` has been logged, preventing future logs for the same data until `metadataData` itself changes to a new defined value (after perhaps an input change and refetch) and `logged.metadata` would have been reset or handled accordingly if re-logging of new data was desired (though in the current setup, it's a one-time log per data arrival).
 
 This pattern is repeated for all other hooks, ensuring a clean and informative console output.
 
@@ -387,13 +433,13 @@ This pattern is repeated for all other hooks, ensuring a clean and informative c
 
 The `TestPage.tsx` provides a user-friendly interface to modify the parameters for the hooks:
 
--   **Network Selector**: A dropdown list to select the `NetworkId` (e.g., Ethereum, Base, Polygon). Changing this will refetch data for all relevant hooks on the new network.
--   **Address Inputs**: Uses Scaffold-ETH's `AddressInput` component for:
-    -   Contract Address
-    -   Wallet Address
-    -   Pool Address
-        Changing these values will trigger refetches for hooks that depend on them.
--   **Timestamp Inputs**: Standard number input fields for "From Timestamp" and "To Timestamp" (Unix seconds) for the `useHistoricalBalances` hook.
+- **Network Selector**: A dropdown list to select the `NetworkId` (e.g., Ethereum, Base, Polygon). Changing this will refetch data for all relevant hooks on the new network.
+- **Address Inputs**: Uses Scaffold-ETH's `AddressInput` component for:
+    - Contract Address
+    - Wallet Address
+    - Pool Address
+      Changing these values will trigger refetches for hooks that depend on them.
+- **Timestamp Inputs**: Standard number input fields for "From Timestamp" and "To Timestamp" (Unix seconds) for the `useHistoricalBalances` hook.
 
 ### 6. Observing Data
 

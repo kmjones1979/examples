@@ -43,8 +43,9 @@ export const GetNFTItems = ({ isOpen = false }: { isOpen?: boolean }) => {
 
     try {
       console.log("🖼️ Received NFT item data from hook:", data);
-      if (data?.data && data.data.length > 0) {
-        setItem(data.data[0]);
+      if (Array.isArray(data) && data.length > 0) {
+        setItem(data[0]);
+        console.log("✅ Successfully processed NFT item:", data[0].name || `Token #${data[0].token_id}`);
       } else {
         console.log("No valid item data found in response or data array empty");
         setItem(null);
