@@ -25,6 +25,7 @@ import {
 } from "../token-api/schemas";
 import { fetchTokenDetails, fetchTokenTransfers, fetchTokenMetadata, fetchTokenHolders, fetchTokenPools, fetchTokenSwaps, fetchTokenOHLCByContract, fetchTokenOHLCByPool, fetchHistoricalBalances, fetchNFTCollections, fetchNFTItems, fetchNFTSales, fetchNFTHolders, fetchNFTOwnerships, fetchNFTActivities } from "../token-api/utils";
 import type { TokenDetailsParams, TokenTransfersParams, TokenMetadataParams, TokenHoldersParams, PoolsParams, SwapsParams, ContractOHLCParams, PoolOHLCParams, HistoricalBalancesParams } from "../token-api/utils";
+import type { X402Config } from "../x402";
 
 // Define the schema for the arguments the agent will provide for getTokenBalances
 const GetTokenBalancesAgentParamsSchema = z.object({
@@ -34,9 +35,24 @@ const GetTokenBalancesAgentParamsSchema = z.object({
   minAmountUsd: z.number().optional().describe("Optional minimum USD value for a balance to be included.")
 });
 
+// Helper function to validate payment for X402
+const validatePayment = (config: X402Config, actionName: string): void => {
+  if (config.enabled) {
+    // Check if we're in a chat context (payment handled at route level)
+    if (process.env.NODE_ENV === "development" && config.skipValidation) {
+      return; // Skip validation in chat context
+    }
+    
+    // In a real implementation, you would validate payment headers here
+    // For now, we'll throw an error to trigger the 402 response
+    throw new Error(`Payment Required for ${actionName}. Please provide valid payment authorization.`);
+  }
+};
 
-class TokenApiProvider extends ActionProvider<WalletProvider> { // Use WalletProvider as a generic base
-  constructor() {
+class TokenApiProvider extends ActionProvider<WalletProvider> {
+  private x402Config: X402Config;
+
+  constructor(x402Config: X402Config) {
     super(
       "token-api-provider",
       // Description (second arg) is not part of the base ActionProvider constructor based on common patterns.
@@ -44,7 +60,7 @@ class TokenApiProvider extends ActionProvider<WalletProvider> { // Use WalletPro
       // Let's assume no specific tools are being injected into this provider itself.
       [] // Pass an empty array for tools if none are specifically associated with this provider instance
     );
-    // The description is usually part of the @CreateAction decorator or a class property, not super().
+    this.x402Config = x402Config;
   }
 
   // Implement the required supportsNetwork method
@@ -62,9 +78,12 @@ class TokenApiProvider extends ActionProvider<WalletProvider> { // Use WalletPro
   })
   async getTokenBalances(
     _walletProvider: WalletProvider,
-    args: z.infer<typeof GetTokenBalancesAgentParamsSchema>
+    args: z.TypeOf<typeof GetTokenBalancesAgentParamsSchema>
   ): Promise<string> {
     console.log(`[TokenApiProvider] Action: getTokenBalances invoked. Args: ${JSON.stringify(args)}`);
+
+    // Validate payment if X402 is enabled
+    validatePayment(this.x402Config, "getTokenBalances");
 
     if (!args.address) {
       console.error("[TokenApiProvider] Error: Wallet address is required.");
@@ -135,9 +154,12 @@ class TokenApiProvider extends ActionProvider<WalletProvider> { // Use WalletPro
   })
   async getTokenDetails(
     _walletProvider: WalletProvider, // Included for consistency with ActionProvider type
-    args: z.infer<typeof GetTokenDetailsAgentParamsSchema>
+    args: z.TypeOf<typeof GetTokenDetailsAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getTokenDetails, Args: ${JSON.stringify(args)}`);
+
+    // Validate payment if X402 is enabled
+    validatePayment(this.x402Config, "getTokenDetails");
 
     if (!args.contractAddress) {
       return "Error: Contract address is required to get token details.";
@@ -182,9 +204,12 @@ class TokenApiProvider extends ActionProvider<WalletProvider> { // Use WalletPro
   })
   async getTokenTransfers(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.infer<typeof GetTokenTransfersAgentParamsSchema>
+    args: z.TypeOf<typeof GetTokenTransfersAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getTokenTransfers, Args: ${JSON.stringify(args)}`);
+
+    // Validate payment if X402 is enabled
+    validatePayment(this.x402Config, "getTokenTransfers");
 
     const { address, addressRole, fromAddress, toAddress, age, startTime, endTime, ...otherParams } = args;
 
@@ -287,9 +312,12 @@ Examples:
   })
   async getTokenMetadata(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.infer<typeof GetTokenMetadataAgentParamsSchema>
+    args: z.TypeOf<typeof GetTokenMetadataAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getTokenMetadata, Args: ${JSON.stringify(args)}`);
+
+    // Validate payment if X402 is enabled
+    validatePayment(this.x402Config, "getTokenMetadata");
 
     if (!args.contractAddress) {
       return "Error: Contract address is required to get token metadata.";
@@ -328,9 +356,12 @@ Examples:
   })
   async getTokenHolders(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.infer<typeof GetTokenHoldersAgentParamsSchema>
+    args: z.TypeOf<typeof GetTokenHoldersAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getTokenHolders, Args: ${JSON.stringify(args)}`);
+
+    // Validate payment if X402 is enabled
+    validatePayment(this.x402Config, "getTokenHolders");
 
     if (!args.contractAddress) {
       return "Error: Contract address is required to get token holders.";
@@ -372,7 +403,7 @@ Examples:
   })
   async getTokenPools(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.infer<typeof GetTokenPoolsAgentParamsSchema>
+    args: z.TypeOf<typeof GetTokenPoolsAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getTokenPools, Args: ${JSON.stringify(args)}`);
 
@@ -416,7 +447,7 @@ Examples:
   })
   async getTokenSwaps(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.infer<typeof GetTokenSwapsAgentParamsSchema>
+    args: z.TypeOf<typeof GetTokenSwapsAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getTokenSwaps, Args: ${JSON.stringify(args)}`);
 
@@ -465,7 +496,7 @@ Examples:
   })
   async getTokenOHLCByContract(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.infer<typeof GetTokenOHLCByContractAgentParamsSchema>
+    args: z.TypeOf<typeof GetTokenOHLCByContractAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getTokenOHLCByContract, Args: ${JSON.stringify(args)}`);
 
@@ -513,7 +544,7 @@ Examples:
   })
   async getTokenOHLCByPool(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.infer<typeof GetTokenOHLCByPoolAgentParamsSchema>
+    args: z.TypeOf<typeof GetTokenOHLCByPoolAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getTokenOHLCByPool, Args: ${JSON.stringify(args)}`);
 
@@ -564,7 +595,7 @@ Examples:
   })
   async getHistoricalBalances(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.infer<typeof GetHistoricalBalancesAgentParamsSchema>
+    args: z.TypeOf<typeof GetHistoricalBalancesAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getHistoricalBalances, Args: ${JSON.stringify(args)}`);
 
@@ -615,9 +646,12 @@ Examples:
   })
   async getNFTCollections(
     _walletProvider: WalletProvider,
-    args: z.infer<typeof GetNFTCollectionsAgentParamsSchema>
+    args: z.TypeOf<typeof GetNFTCollectionsAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getNFTCollections, Args: ${JSON.stringify(args)}`);
+
+    // Validate payment if X402 is enabled
+    validatePayment(this.x402Config, "getNFTCollections");
 
     if (!args.contractAddress) {
       return "Error: Contract address is required to get NFT collection data.";
@@ -651,7 +685,7 @@ Examples:
   })
   async getNFTItems(
     _walletProvider: WalletProvider,
-    args: z.infer<typeof GetNFTItemsAgentParamsSchema>
+    args: z.TypeOf<typeof GetNFTItemsAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getNFTItems, Args: ${JSON.stringify(args)}`);
 
@@ -687,7 +721,7 @@ Examples:
   })
   async getNFTSales(
     _walletProvider: WalletProvider,
-    args: z.infer<typeof GetNFTSalesAgentParamsSchema>
+    args: z.TypeOf<typeof GetNFTSalesAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getNFTSales, Args: ${JSON.stringify(args)}`);
 
@@ -729,7 +763,7 @@ Examples:
   })
   async getNFTHolders(
     _walletProvider: WalletProvider,
-    args: z.infer<typeof GetNFTHoldersAgentParamsSchema>
+    args: z.TypeOf<typeof GetNFTHoldersAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getNFTHolders, Args: ${JSON.stringify(args)}`);
 
@@ -767,7 +801,7 @@ Examples:
   })
   async getNFTOwnerships(
     _walletProvider: WalletProvider,
-    args: z.infer<typeof GetNFTOwnershipsAgentParamsSchema>
+    args: z.TypeOf<typeof GetNFTOwnershipsAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getNFTOwnerships, Args: ${JSON.stringify(args)}`);
 
@@ -804,7 +838,7 @@ Examples:
   })
   async getNFTActivities(
     _walletProvider: WalletProvider,
-    args: z.infer<typeof GetNFTActivitiesAgentParamsSchema>
+    args: z.TypeOf<typeof GetNFTActivitiesAgentParamsSchema>
   ): Promise<string> {
     console.log(`Action: getNFTActivities, Args: ${JSON.stringify(args)}`);
 
@@ -839,4 +873,4 @@ Examples:
   }
 }
 
-export const tokenApiProvider = () => new TokenApiProvider(); 
+export const tokenApiProvider = (x402Config: X402Config) => new TokenApiProvider(x402Config); 

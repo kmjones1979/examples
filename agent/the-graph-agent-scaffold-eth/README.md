@@ -21,6 +21,7 @@
 -   [MCP Integration](#mcp-integration) - Dynamic subgraph discovery and querying
 -   [Token API Integration](#token-api-integration) - Comprehensive token data access
 -   [NFT API Integration](#nft-api-integration) - NFT analytics and tracking
+-   [x402 Payment Integration](#x402-payment-integration) - Micropayments for AI agents
 
 ### Usage & Examples
 
@@ -63,6 +64,7 @@
 -   🔌 **MCP Integration**: Direct connection to The Graph's official Model Context Protocol server
 -   🎨 **NFT Analytics**: Comprehensive NFT data analysis including collections, ownership, sales, and activity tracking
 -   🪙 **Token API**: Full token data access for balances, transfers, metadata, and market information
+-   💳 **x402 Payment Integration**: Autonomous micropayments for AI agents using Coinbase's open payment protocol
 -   🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/)
 -   🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components
 -   🔥 **Burner Wallet & Local Faucet**: Quickly test your application
@@ -156,9 +158,17 @@ Store these in a `.env.local` file at the root of your `packages/nextjs` directo
     -   Generate with: `openssl rand -hex 32` (prefix with "0x")
 
 5.  **Token API Configuration** (if using external Token API):
+
     -   `NEXT_PUBLIC_GRAPH_API_URL` - Base URL (defaults to Token API)
     -   `NEXT_PUBLIC_GRAPH_API_KEY` - API key for Token API
     -   `NEXT_PUBLIC_GRAPH_TOKEN` - Alternative Bearer token
+
+6.  **x402 Payment Configuration** (for autonomous micropayments):
+    -   `X402_ENABLED` - Enable x402 payments (true/false)
+    -   `X402_FACILITATOR_URL` - Facilitator service URL (defaults to https://facilitator.x402.org)
+    -   `X402_WALLET_ADDRESS` - Wallet address for payments
+    -   `X402_NETWORK` - Network for payments (base/ethereum/polygon)
+    -   `X402_USDC_CONTRACT` - USDC contract address for the network
 
 ### Environment Setup Example
 
@@ -175,6 +185,13 @@ AGENT_PRIVATE_KEY=0x$(openssl rand -hex 32)
 
 # Optional: Token API (if using external service)
 NEXT_PUBLIC_GRAPH_API_KEY=your-token-api-key
+
+# Optional: x402 Payment Configuration
+X402_ENABLED=false
+X402_FACILITATOR_URL=https://facilitator.x402.org
+X402_WALLET_ADDRESS=0x...
+X402_NETWORK=base
+X402_USDC_CONTRACT=0xA0b86a33E6441c0a8C6f8A0b8e1d7BcF2eD3c0e2
 EOF
 ```
 
@@ -1323,6 +1340,269 @@ The NFT API integration includes comprehensive error handling:
 7. **Use appropriate filtering** to reduce response size
 8. **Monitor API usage** to stay within limits
 
+## x402 Payment Integration
+
+### Overview
+
+The x402 payment integration enables AI agents to autonomously pay for API access using Coinbase's open payment protocol. Built around the HTTP 402 Payment Required status code, x402 allows services to monetize APIs and digital content onchain, enabling clients to programmatically pay for access without accounts, sessions, or complex authentication flows.
+
+**Key Advantages:**
+
+-   **Autonomous Payments**: AI agents can pay for API access without human intervention
+-   **Instant Settlement**: Payments settle onchain in seconds, not days
+-   **No Fees**: x402 protocol has zero fees for both merchants and customers
+-   **Frictionless**: Minimal setup required - as little as one line of configuration
+-   **Blockchain Agnostic**: Works with multiple networks and tokens
+-   **Web Native**: Uses HTTP status codes and headers for seamless integration
+
+### x402 Protocol Flow
+
+The x402 payment system follows a simple request-response pattern:
+
+1. **Request**: Client (AI agent) requests a resource from the server
+2. **Payment Required**: Server responds with HTTP 402 and payment instructions
+3. **Payment**: Client constructs and submits payment using `transferWithAuthorization`
+4. **Verification**: Server verifies payment with x402 facilitator
+5. **Settlement**: Payment is settled onchain and resource is provided
+
+### Key Features
+
+-   **Automatic Payment Handling**: Graph MCP provider automatically detects 402 responses and processes payments
+-   **EIP-712 Signatures**: Secure `transferWithAuthorization` signatures for USDC transfers
+-   **Facilitator Integration**: Works with Coinbase's x402 facilitator service
+-   **Flexible Configuration**: Supports multiple networks and payment tokens
+-   **Retry Logic**: Automatically retries failed requests with payment credentials
+-   **Error Handling**: Comprehensive error handling for payment failures
+
+### Supported Networks & Tokens
+
+-   **Base** (`base`) - Primary network for fee-free USDC payments
+-   **Ethereum** (`ethereum`) - Mainnet support for USDC payments
+-   **Polygon** (`polygon`) - Low-cost alternative network
+-   **Primary Token**: USDC (USD Coin) via `transferWithAuthorization`
+
+### x402 Configuration
+
+The x402 integration requires several environment variables for proper operation:
+
+```bash
+# x402 Payment Configuration
+X402_ENABLED=true                                              # Enable x402 payments
+X402_FACILITATOR_URL=https://facilitator.x402.org             # Facilitator service URL
+X402_WALLET_ADDRESS=0x...                                     # Wallet address for payments
+X402_NETWORK=base                                              # Network for payments
+X402_USDC_CONTRACT=0xA0b86a33E6441c0a8C6f8A0b8e1d7BcF2eD3c0e2 # USDC contract address
+```
+
+### Implementation Details
+
+#### GraphMCPProvider Enhancement
+
+The Graph MCP provider has been enhanced with x402 support:
+
+```typescript
+// Initialize with x402 configuration
+const provider = graphMCPProvider({
+    enabled: true,
+    walletAddress: "0x...",
+    facilitatorUrl: "https://facilitator.x402.org",
+    network: "base",
+    usdcContract: "0xA0b86a33E6441c0a8C6f8A0b8e1d7BcF2eD3c0e2",
+});
+
+// All MCP actions now support automatic payments
+const actions = provider.getActions(walletProvider);
+```
+
+#### Payment Flow Implementation
+
+```typescript
+// 1. Detect 402 Payment Required responses
+if (error.status === 402 || error.message?.includes("Payment Required")) {
+    // 2. Parse payment instructions from response headers
+    const paymentInstructions = parsePaymentInstructions(error);
+
+    // 3. Create payment handler
+    const paymentHandler = new X402PaymentHandler(x402Config, walletProvider);
+
+    // 4. Process payment
+    const paymentPayload = await paymentHandler.handlePaymentRequired(
+        paymentInstructions
+    );
+
+    // 5. Retry request with payment credentials
+    return await retryWithPayment(tool, args, paymentPayload);
+}
+```
+
+#### EIP-712 Signature Creation
+
+The system uses EIP-712 signatures for secure USDC transfers:
+
+```typescript
+// EIP-712 domain for USDC transferWithAuthorization
+const domain = {
+    name: "USD Coin",
+    version: "2",
+    chainId: 8453, // Base network
+    verifyingContract: "0xA0b86a33E6441c0a8C6f8A0b8e1d7BcF2eD3c0e2",
+};
+
+// Create transferWithAuthorization signature
+const message = {
+    from: walletAddress,
+    to: recipient,
+    value: amount,
+    validAfter: "0",
+    validBefore: deadline,
+    nonce: nonce,
+};
+
+const signature = await walletProvider.signTypedData(domain, types, message);
+```
+
+### API Route Integration
+
+The system includes a demonstration API route (`/api/mcp/route.ts`) that shows x402 middleware integration:
+
+```typescript
+// Check for payment requirements
+if (x402Config.enabled && shouldRequirePayment(request)) {
+    const paymentHeaders = extractPaymentHeaders(request);
+
+    if (!paymentHeaders) {
+        return NextResponse.json(
+            {
+                error: "Payment Required",
+                instructions: {
+                    method: "exact",
+                    token: x402Config.usdcContract,
+                    amount: "10000", // 0.01 USDC
+                    recipient: x402Config.walletAddress,
+                    // ... other payment details
+                },
+            },
+            {
+                status: 402,
+                headers: {
+                    "X-Payment-Method": "exact",
+                    "X-Payment-Token": x402Config.usdcContract,
+                    "X-Payment-Amount": "10000",
+                    // ... other payment headers
+                },
+            }
+        );
+    }
+}
+```
+
+### Usage Examples
+
+#### Basic x402 Integration
+
+```typescript
+// Initialize Graph MCP provider with x402 support
+const provider = graphMCPProvider({
+    enabled: true,
+    walletAddress: process.env.X402_WALLET_ADDRESS,
+    facilitatorUrl: process.env.X402_FACILITATOR_URL,
+    network: "base",
+});
+
+// Use provider normally - payments handled automatically
+const actions = provider.getActions(walletProvider);
+const result = await actions
+    .find((a) => a.name === "searchSubgraphs")
+    .invoke({ keyword: "Uniswap" });
+```
+
+#### Manual Payment Processing
+
+```typescript
+import {
+    X402PaymentHandler,
+    parsePaymentInstructions,
+} from "./utils/chat/agentkit/x402";
+
+// Handle 402 response manually
+try {
+    const result = await apiCall();
+} catch (error) {
+    if (error.status === 402) {
+        const instructions = parsePaymentInstructions(error);
+        const handler = new X402PaymentHandler(x402Config, walletProvider);
+        const payment = await handler.handlePaymentRequired(instructions);
+
+        // Retry with payment
+        const result = await apiCallWithPayment(payment);
+    }
+}
+```
+
+### Chat Interface Integration
+
+The x402 integration works seamlessly with the chat interface:
+
+```
+User: "Find Uniswap subgraphs"
+AI: Searching for Uniswap subgraphs...
+[Payment Required - Processing 0.01 USDC payment]
+AI: Payment successful! Here are the Uniswap subgraphs: ...
+```
+
+### Security Considerations
+
+1. **Private Key Management**: Store private keys securely, never commit to version control
+2. **Payment Limits**: Set reasonable payment limits to prevent excessive charges
+3. **Network Selection**: Use Base network for fee-free USDC transactions
+4. **Facilitator Trust**: Only use trusted facilitator services
+5. **Signature Validation**: Ensure proper EIP-712 signature validation
+6. **Error Handling**: Implement comprehensive error handling for payment failures
+
+### Troubleshooting x402 Issues
+
+1. **Payment Failures**
+
+    - Verify wallet has sufficient USDC balance
+    - Check network configuration (Base recommended)
+    - Ensure facilitator URL is accessible
+    - Validate EIP-712 signature creation
+
+2. **Configuration Issues**
+
+    - Verify all environment variables are set
+    - Check wallet address format (checksummed)
+    - Ensure USDC contract address is correct for network
+    - Validate facilitator URL accessibility
+
+3. **Integration Problems**
+    - Check x402 middleware configuration
+    - Verify payment header extraction
+    - Ensure proper 402 response handling
+    - Monitor facilitator service status
+
+### Best Practices
+
+1. **Use Base Network**: Leverage fee-free USDC transactions on Base
+2. **Monitor Payments**: Track payment activity and costs
+3. **Set Limits**: Implement reasonable payment limits for AI agents
+4. **Cache Results**: Cache API responses to minimize payment frequency
+5. **Error Recovery**: Implement robust error handling and retry logic
+6. **Test Thoroughly**: Test payment flows in development environment
+7. **Security First**: Follow security best practices for key management
+
+### x402 Ecosystem
+
+The x402 integration opens up possibilities for:
+
+-   **AI Agent Monetization**: Agents can autonomously pay for premium data
+-   **Micropayment APIs**: Services can charge per request or usage
+-   **Content Paywalls**: Access to premium blockchain data and analytics
+-   **Service Aggregation**: Combine multiple paid services seamlessly
+-   **Usage-Based Billing**: Pay only for what you use
+
+For more information about the x402 protocol, visit the [official documentation](https://x402.gitbook.io/x402).
+
 ## Chat Interaction Examples
 
 This section demonstrates how users can interact with different data sources through natural language queries in the chat interface.
@@ -2040,6 +2320,7 @@ A multi-layered approach to ensure reliability.
     - **Server-side logs**: Check the terminal output where your Next.js app is running for logs from `app/api/token-proxy/route.ts`. These logs often contain the exact URL being called and any errors received.
 
 6. **NFT API Issues**
+
     - **Invalid Contract Addresses**: Ensure NFT contract addresses are valid and exist on the specified network. Use checksum addresses when possible.
     - **Network Mismatches**: Verify that the NFT collection exists on the specified network (mainnet, polygon, etc.). Cross-check contract deployment networks.
     - **Token Not Found**: When querying specific token IDs, ensure they exist within the collection and haven't been burned.
@@ -2047,6 +2328,13 @@ A multi-layered approach to ensure reliability.
     - **Large Collections**: For collections with millions of NFTs, use pagination and specific filtering to avoid timeouts.
     - **Metadata Unavailability**: Some NFTs may have missing or invalid metadata. Handle null/undefined values gracefully.
     - **Cross-Network Data**: When analyzing multi-network NFTs, remember to specify the correct networkId for each query.
+
+7. **x402 Payment Issues**
+    - **Payment Failures**: Verify wallet has sufficient USDC balance and network configuration (Base recommended for fee-free transactions).
+    - **Configuration Errors**: Ensure all x402 environment variables are properly set and wallet address is checksummed.
+    - **EIP-712 Signature Issues**: Validate that the wallet provider supports EIP-712 signing and signatures are properly formatted.
+    - **Facilitator Connection**: Check that the facilitator URL is accessible and responding correctly.
+    - **Network Compatibility**: Ensure the selected network supports the specified USDC contract address.
 
 ## API Reference
 
@@ -2074,6 +2362,14 @@ Quick reference for all available integrations and their capabilities.
 -   **Tools**: 6 specialized NFT endpoints
 -   **Proxy**: `/api/token-proxy` (shared with Token API)
 
+### x402 Payment Summary
+
+-   **Purpose**: Autonomous micropayments for AI agents
+-   **Protocol**: Coinbase's open payment standard using HTTP 402
+-   **Networks**: Base (primary), Ethereum, Polygon
+-   **Token**: USDC via transferWithAuthorization
+-   **Integration**: Automatic payment handling in Graph MCP provider
+
 ### Environment Variables Reference
 
 ```bash
@@ -2085,6 +2381,13 @@ NEXTAUTH_SECRET=your-nextauth-secret          # Session management
 # Optional
 AGENT_PRIVATE_KEY=0x...                       # On-chain transactions
 NEXT_PUBLIC_GRAPH_API_KEY=your-token-api-key  # Token API access
+
+# x402 Payment Configuration
+X402_ENABLED=true                             # Enable x402 payments
+X402_FACILITATOR_URL=https://facilitator.x402.org  # Facilitator service
+X402_WALLET_ADDRESS=0x...                     # Payment wallet address
+X402_NETWORK=base                             # Payment network
+X402_USDC_CONTRACT=0xA0b86a33E6441c0a8C6f8A0b8e1d7BcF2eD3c0e2  # USDC contract
 ```
 
 ### Supported Networks

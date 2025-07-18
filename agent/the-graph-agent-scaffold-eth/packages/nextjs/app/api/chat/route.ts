@@ -1,34 +1,95 @@
+import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { getServerSession } from "next-auth";
 import { foundry } from "viem/chains";
 import deployedContracts from "~~/contracts/deployedContracts";
+import { createX402Middleware, getDefaultX402Config } from "~~/utils/chat/agentkit/x402";
 import { SUBGRAPH_ENDPOINTS, createAgentKit, getTools } from "~~/utils/chat/tools";
 import { siweAuthOptions } from "~~/utils/scaffold-eth/auth";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-export async function POST(req: Request) {
-  const session = (await getServerSession(siweAuthOptions({ chain: foundry }))) as any;
-  const userAddress = session?.user?.address;
+// Initialize x402 configuration
+const x402Config = getDefaultX402Config();
 
-  if (!userAddress) {
-    return new Response("Unauthorized", { status: 401 });
+// Helper functions for payment detection
+function extractPaymentHeaders(request: NextRequest): any | null {
+  const headers = request.headers;
+
+  if (headers.get("x-payment-method") && headers.get("x-payment-from") && headers.get("x-payment-authorization")) {
+    return {
+      method: headers.get("x-payment-method"),
+      from: headers.get("x-payment-from"),
+      authorization: headers.get("x-payment-authorization"),
+      signature: headers.get("x-payment-signature"),
+    };
   }
 
-  const { messages } = await req.json();
-  const { agentKit, address } = await createAgentKit();
+  return null;
+}
 
-  const uniswapEndpoint =
-    typeof SUBGRAPH_ENDPOINTS.UNISWAP_V3 === "function"
-      ? SUBGRAPH_ENDPOINTS.UNISWAP_V3()
-      : SUBGRAPH_ENDPOINTS.UNISWAP_V3;
+function shouldRequirePayment(request: NextRequest): boolean {
+  // Require payment for all chat operations when X402 is enabled
+  return x402Config.enabled;
+}
 
-  const aaveEndpoint =
-    typeof SUBGRAPH_ENDPOINTS.AAVE_V3 === "function" ? SUBGRAPH_ENDPOINTS.AAVE_V3() : SUBGRAPH_ENDPOINTS.AAVE_V3;
+export async function POST(req: NextRequest) {
+  try {
+    // Apply x402 middleware if enabled
+    if (x402Config.enabled) {
+      // Check payment requirements
+      const paymentHeaders = extractPaymentHeaders(req);
 
-  const prompt = `
+      if (!paymentHeaders && shouldRequirePayment(req)) {
+        return NextResponse.json(
+          {
+            error: "Payment Required",
+            message: "Payment is required to access this chat service.",
+            instructions: {
+              method: "exact",
+              token: x402Config.usdcContract,
+              amount: x402Config.queryPrice,
+              recipient: x402Config.walletAddress,
+              nonce: Math.floor(Date.now() / 1000).toString(),
+              deadline: (Math.floor(Date.now() / 1000) + 3600).toString(), // 1 hour
+            },
+          },
+          {
+            status: 402,
+            headers: {
+              "X-Payment-Method": "exact",
+              "X-Payment-Token": x402Config.usdcContract,
+              "X-Payment-Amount": x402Config.queryPrice,
+              "X-Payment-Recipient": x402Config.walletAddress,
+              "X-Payment-Nonce": Math.floor(Date.now() / 1000).toString(),
+              "X-Payment-Deadline": (Math.floor(Date.now() / 1000) + 3600).toString(),
+            },
+          },
+        );
+      }
+    }
+
+    const session = (await getServerSession(siweAuthOptions({ chain: foundry }))) as any;
+    const userAddress = session?.user?.address;
+
+    if (!userAddress) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    const { messages } = await req.json();
+    const { agentKit, address } = await createAgentKit();
+
+    const uniswapEndpoint =
+      typeof SUBGRAPH_ENDPOINTS.UNISWAP_V3 === "function"
+        ? SUBGRAPH_ENDPOINTS.UNISWAP_V3()
+        : SUBGRAPH_ENDPOINTS.UNISWAP_V3;
+
+    const aaveEndpoint =
+      typeof SUBGRAPH_ENDPOINTS.AAVE_V3 === "function" ? SUBGRAPH_ENDPOINTS.AAVE_V3() : SUBGRAPH_ENDPOINTS.AAVE_V3;
+
+    const prompt = `
   You are a helpful assistant, who can answer questions and make certain onchain interactions based on the user's request.
   The connected user's address is: ${userAddress}
   Your address is: ${address}
@@ -224,72 +285,97 @@ export async function POST(req: Request) {
     .join("\n")}
   `;
 
-  try {
-    console.log("[api/chat] Calling streamText with AI SDK..."); // Log 6: Before calling AI
-    const result = await streamText({
-      model: openai("gpt-4-turbo-preview"),
-      system: prompt,
-      messages,
-      tools: getTools(agentKit),
-    });
-    console.log("[api/chat] streamText initial call completed."); // Log 7a: After initial AI call returns stream object
+    try {
+      console.log("[api/chat] Calling streamText with AI SDK..."); // Log 6: Before calling AI
+      const result = await streamText({
+        model: openai("gpt-4-turbo-preview"),
+        system: prompt,
+        messages,
+        tools: getTools(agentKit),
+      });
+      console.log("[api/chat] streamText initial call completed."); // Log 7a: After initial AI call returns stream object
 
-    // --- DEBUG: Log stream parts using async iterator ---
-    let loggedToolCalls = 0;
-    let loggedText = "";
-    console.log("[api/chat] Reading stream parts...");
-    for await (const part of result.fullStream) {
-      // Use fullStream or potentially another iterator if available
-      switch (part.type) {
-        case "text-delta":
-          // console.log("[api/chat] Stream part: text-delta:", part.textDelta);
-          loggedText += part.textDelta;
-          break;
-        case "tool-call":
-          console.log(
-            "[api/chat] Stream part: tool-call: ID:",
-            part.toolCallId,
-            "Name:",
-            part.toolName,
-            "Args:",
-            JSON.stringify(part.args),
-          );
-          loggedToolCalls++;
-          break;
-        case "tool-result":
-          console.log("[api/chat] Stream part: tool-result:", JSON.stringify(part.result));
-          break;
-        case "error":
-          console.error("[api/chat] Stream part: error:", part.error);
-          break;
-        // Handle other part types if necessary (e.g., 'finish')
-        case "finish":
-          console.log("[api/chat] Stream part: finish. Reason:", part.finishReason, "Usage:", part.usage);
-          break;
-        default:
-          // console.log("[api/chat] Stream part: other type:", part.type);
-          break;
+      // --- DEBUG: Log stream parts using async iterator ---
+      let loggedToolCalls = 0;
+      let loggedText = "";
+      console.log("[api/chat] Reading stream parts...");
+      for await (const part of result.fullStream) {
+        // Use fullStream or potentially another iterator if available
+        switch (part.type) {
+          case "text-delta":
+            // console.log("[api/chat] Stream part: text-delta:", part.textDelta);
+            loggedText += part.textDelta;
+            break;
+          case "tool-call":
+            console.log(
+              "[api/chat] Stream part: tool-call: ID:",
+              part.toolCallId,
+              "Name:",
+              part.toolName,
+              "Args:",
+              JSON.stringify(part.args),
+            );
+            loggedToolCalls++;
+            break;
+          case "tool-result":
+            console.log("[api/chat] Stream part: tool-result:", JSON.stringify(part.result));
+            break;
+          case "error":
+            console.error("[api/chat] Stream part: error:", part.error);
+            break;
+          // Handle other part types if necessary (e.g., 'finish')
+          case "finish":
+            console.log("[api/chat] Stream part: finish. Reason:", part.finishReason, "Usage:", part.usage);
+            break;
+          default:
+            // console.log("[api/chat] Stream part: other type:", part.type);
+            break;
+        }
       }
+      console.log(
+        `[api/chat] Finished reading stream. Logged ${loggedToolCalls} tool calls. Logged text length: ${loggedText.length}`,
+      );
+      // --- END DEBUG ---
+
+      // Re-execute to get a fresh stream for the actual response
+      console.log("[api/chat] Re-executing streamText to return response...");
+      const finalResult = await streamText({
+        model: openai("gpt-4-turbo-preview"),
+        system: prompt,
+        messages,
+        tools: getTools(agentKit),
+      });
+
+      // Use toDataStreamResponse as indicated by the linter error
+      return finalResult.toDataStreamResponse();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error(`[api/chat] Error in POST handler: ${errorMessage}`, error); // Log 8: Catching errors
+      return new Response(`Error processing request: ${errorMessage}`, { status: 500 });
     }
-    console.log(
-      `[api/chat] Finished reading stream. Logged ${loggedToolCalls} tool calls. Logged text length: ${loggedText.length}`,
-    );
-    // --- END DEBUG ---
-
-    // Re-execute to get a fresh stream for the actual response
-    console.log("[api/chat] Re-executing streamText to return response...");
-    const finalResult = await streamText({
-      model: openai("gpt-4-turbo-preview"),
-      system: prompt,
-      messages,
-      tools: getTools(agentKit),
-    });
-
-    // Use toDataStreamResponse as indicated by the linter error
-    return finalResult.toDataStreamResponse();
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error(`[api/chat] Error in POST handler: ${errorMessage}`, error); // Log 8: Catching errors
+    console.error(`[api/chat] Error in outer try-catch: ${errorMessage}`, error);
+
+    // Check if it's a payment required error
+    if (error instanceof Error && error.message.includes("Payment Required")) {
+      return NextResponse.json(
+        {
+          error: "Payment Required",
+          details: error.message,
+          instructions: {
+            method: "exact",
+            token: x402Config.usdcContract,
+            amount: x402Config.queryPrice,
+            recipient: x402Config.walletAddress,
+            nonce: Math.floor(Date.now() / 1000).toString(),
+            deadline: (Math.floor(Date.now() / 1000) + 3600).toString(),
+          },
+        },
+        { status: 402 },
+      );
+    }
+
     return new Response(`Error processing request: ${errorMessage}`, { status: 500 });
   }
 }

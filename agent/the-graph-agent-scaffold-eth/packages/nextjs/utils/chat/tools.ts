@@ -3,6 +3,7 @@ import { graphMCPProvider } from "./agentkit/action-providers/graph-mcp-provider
 import { SUBGRAPH_ENDPOINTS, graphQuerierProvider } from "./agentkit/action-providers/graph-querier";
 import { tokenApiProvider } from "./agentkit/action-providers/token-api-provider";
 import { agentKitToTools } from "./agentkit/framework-extensions/ai-sdk";
+import { getDefaultX402Config } from "./agentkit/x402";
 import { AgentKit, ViemWalletProvider, walletActionProvider } from "@coinbase/agentkit";
 import { tool } from "ai";
 import fetch from "node-fetch";
@@ -21,14 +22,20 @@ export async function createAgentKit() {
   });
   const viemWalletProvider = new ViemWalletProvider(walletClient as any);
 
+  // Get X402 configuration for chat context (skip validation at action level)
+  const x402Config = {
+    ...getDefaultX402Config(),
+    skipValidation: true, // Payment handled at chat route level
+  };
+
   const agentKit = await AgentKit.from({
     walletProvider: viemWalletProvider,
     actionProviders: [
       walletActionProvider(),
       contractInteractor(foundry.id),
-      graphQuerierProvider(),
-      graphMCPProvider(),
-      tokenApiProvider(),
+      graphQuerierProvider(x402Config),
+      graphMCPProvider(x402Config),
+      tokenApiProvider(x402Config),
     ],
   });
 

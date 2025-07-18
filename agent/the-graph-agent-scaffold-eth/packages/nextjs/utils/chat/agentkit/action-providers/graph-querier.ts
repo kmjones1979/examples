@@ -1,3 +1,4 @@
+import type { X402Config } from "../x402";
 import { ActionProvider, WalletProvider } from "@coinbase/agentkit";
 import { z } from "zod";
 
@@ -28,10 +29,29 @@ const graphQuerySchema = z.object({
   variables: z.record(z.any()).optional().describe("Optional variables for the GraphQL query"),
 });
 
+// Helper function to validate payment for X402
+const validatePayment = (config: X402Config, actionName: string): void => {
+  if (config.enabled) {
+    // Check if we're in a chat context (payment handled at route level)
+    if (process.env.NODE_ENV === "development" && config.skipValidation) {
+      return; // Skip validation in chat context
+    }
+
+    // In a real implementation, you would validate payment headers here
+    // For now, we'll throw an error to trigger the 402 response
+    throw new Error(`Payment Required for ${actionName}. Please provide valid payment authorization.`);
+  }
+};
+
 export class GraphQuerierProvider implements ActionProvider<WalletProvider> {
   name = "graph-querier";
   actionProviders = [];
   supportsNetwork = () => true;
+  private x402Config: X402Config;
+
+  constructor(x402Config: X402Config) {
+    this.x402Config = x402Config;
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getActions(walletProvider: WalletProvider) {
@@ -41,8 +61,11 @@ export class GraphQuerierProvider implements ActionProvider<WalletProvider> {
         description: "Query a subgraph using GraphQL",
         schema: graphQuerySchema,
         severity: "info",
-        invoke: async ({ endpoint, query, variables = {} }: z.infer<typeof graphQuerySchema>) => {
+        invoke: async ({ endpoint, query, variables = {} }: z.TypeOf<typeof graphQuerySchema>) => {
           try {
+            // Validate payment if X402 is enabled
+            validatePayment(this.x402Config, "querySubgraph");
+
             const resolvedEndpoint = typeof endpoint === "function" ? endpoint() : endpoint;
 
             const response = await fetch(resolvedEndpoint, {
@@ -65,4 +88,4 @@ export class GraphQuerierProvider implements ActionProvider<WalletProvider> {
   }
 }
 
-export const graphQuerierProvider = () => new GraphQuerierProvider();
+export const graphQuerierProvider = (x402Config: X402Config) => new GraphQuerierProvider(x402Config);
