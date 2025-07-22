@@ -31,45 +31,14 @@ function extractPaymentHeaders(request: NextRequest): any | null {
 }
 
 function shouldRequirePayment(request: NextRequest): boolean {
-  // Require payment for all chat operations when X402 is enabled
-  return x402Config.enabled;
+  // Don't require payment from users - the agent will handle payments internally
+  return false;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    // Apply x402 middleware if enabled
-    if (x402Config.enabled) {
-      // Check payment requirements
-      const paymentHeaders = extractPaymentHeaders(req);
-
-      if (!paymentHeaders && shouldRequirePayment(req)) {
-        return NextResponse.json(
-          {
-            error: "Payment Required",
-            message: "Payment is required to access this chat service.",
-            instructions: {
-              method: "exact",
-              token: x402Config.usdcContract,
-              amount: x402Config.queryPrice,
-              recipient: x402Config.walletAddress,
-              nonce: Math.floor(Date.now() / 1000).toString(),
-              deadline: (Math.floor(Date.now() / 1000) + 3600).toString(), // 1 hour
-            },
-          },
-          {
-            status: 402,
-            headers: {
-              "X-Payment-Method": "exact",
-              "X-Payment-Token": x402Config.usdcContract,
-              "X-Payment-Amount": x402Config.queryPrice,
-              "X-Payment-Recipient": x402Config.walletAddress,
-              "X-Payment-Nonce": Math.floor(Date.now() / 1000).toString(),
-              "X-Payment-Deadline": (Math.floor(Date.now() / 1000) + 3600).toString(),
-            },
-          },
-        );
-      }
-    }
+    // x402 is handled internally by the agent, not by user payments
+    // Users can chat freely, and the agent will handle payments for external API calls
 
     const session = (await getServerSession(siweAuthOptions({ chain: foundry }))) as any;
     const userAddress = session?.user?.address;
@@ -80,6 +49,23 @@ export async function POST(req: NextRequest) {
 
     const { messages } = await req.json();
     const { agentKit, address } = await createAgentKit();
+
+    // Trim conversation history to prevent context length overflow
+    const maxMessages = 15; // Keep only the last 15 messages to be more conservative
+    const trimmedMessages =
+      messages.length > maxMessages
+        ? [
+            ...messages.slice(0, 2), // Keep first 2 messages (system/user setup)
+            ...messages.slice(-maxMessages + 2), // Keep last maxMessages-2 messages
+          ]
+        : messages;
+
+    console.log(`[api/chat] Original messages: ${messages.length}, Trimmed to: ${trimmedMessages.length}`);
+
+    // Additional safety check: if still too many messages, trim more aggressively
+    if (trimmedMessages.length > 10) {
+      console.log(`[api/chat] Warning: Still ${trimmedMessages.length} messages, consider clearing chat history`);
+    }
 
     const uniswapEndpoint =
       typeof SUBGRAPH_ENDPOINTS.UNISWAP_V3 === "function"
@@ -288,9 +274,9 @@ export async function POST(req: NextRequest) {
     try {
       console.log("[api/chat] Calling streamText with AI SDK..."); // Log 6: Before calling AI
       const result = await streamText({
-        model: openai("gpt-4-turbo-preview"),
+        model: openai("gpt-4o-mini"),
         system: prompt,
-        messages,
+        messages: trimmedMessages,
         tools: getTools(agentKit),
       });
       console.log("[api/chat] streamText initial call completed."); // Log 7a: After initial AI call returns stream object
@@ -340,9 +326,9 @@ export async function POST(req: NextRequest) {
       // Re-execute to get a fresh stream for the actual response
       console.log("[api/chat] Re-executing streamText to return response...");
       const finalResult = await streamText({
-        model: openai("gpt-4-turbo-preview"),
+        model: openai("gpt-4o-mini"),
         system: prompt,
-        messages,
+        messages: trimmedMessages,
         tools: getTools(agentKit),
       });
 

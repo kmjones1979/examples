@@ -21,35 +21,19 @@ export const SUBGRAPH_ENDPOINTS: Record<string, string | EndpointGetter> = {
 };
 
 const graphQuerySchema = z.object({
-  endpoint: z
-    .string()
-    .or(z.function().returns(z.string()))
-    .describe("The subgraph endpoint URL or function that returns it"),
-  query: z.string().describe("The GraphQL query string"),
-  variables: z.record(z.any()).optional().describe("Optional variables for the GraphQL query"),
+  endpoint: z.string(),
+  query: z.string(),
+  variables: z.record(z.any()).optional(),
 });
 
-// Helper function to validate payment for X402
-const validatePayment = (config: X402Config, actionName: string): void => {
-  if (config.enabled) {
-    // Check if we're in a chat context (payment handled at route level)
-    if (process.env.NODE_ENV === "development" && config.skipValidation) {
-      return; // Skip validation in chat context
-    }
-
-    // In a real implementation, you would validate payment headers here
-    // For now, we'll throw an error to trigger the 402 response
-    throw new Error(`Payment Required for ${actionName}. Please provide valid payment authorization.`);
-  }
-};
-
-export class GraphQuerierProvider implements ActionProvider<WalletProvider> {
+export class GraphQuerierProvider extends ActionProvider<WalletProvider> {
   name = "graph-querier";
   actionProviders = [];
   supportsNetwork = () => true;
   private x402Config: X402Config;
 
   constructor(x402Config: X402Config) {
+    super("graph-querier", []);
     this.x402Config = x402Config;
   }
 
@@ -59,14 +43,12 @@ export class GraphQuerierProvider implements ActionProvider<WalletProvider> {
       {
         name: "querySubgraph",
         description: "Query a subgraph using GraphQL",
-        schema: graphQuerySchema,
-        severity: "info",
-        invoke: async ({ endpoint, query, variables = {} }: z.TypeOf<typeof graphQuerySchema>) => {
+        schema: graphQuerySchema as any,
+        invoke: async ({ endpoint, query, variables = {} }: any) => {
           try {
-            // Validate payment if X402 is enabled
-            validatePayment(this.x402Config, "querySubgraph");
+            // Agent handles x402 payments automatically - no validation needed here
 
-            const resolvedEndpoint = typeof endpoint === "function" ? endpoint() : endpoint;
+            const resolvedEndpoint = endpoint;
 
             const response = await fetch(resolvedEndpoint, {
               method: "POST",

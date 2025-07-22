@@ -29,7 +29,6 @@ const getMcpClient = memoize(async () => {
       },
     },
   });
-
   return client;
 });
 
@@ -49,9 +48,6 @@ async function invokeMcpToolWithPayment(
 ) {
   const { tools } = await getMcpTools();
 
-  console.log("Available MCP tools:", Object.keys(tools));
-  console.log("Looking for tool:", toolName);
-
   let tool: any = (tools as any)[toolName];
 
   if (!tool) {
@@ -64,52 +60,59 @@ async function invokeMcpToolWithPayment(
 
   try {
     // Try to invoke the tool normally first
+    let result;
     if (typeof tool === "function") {
-      return await tool(args);
+      result = await tool(args);
     } else if (tool && typeof tool.execute === "function") {
-      return await tool.execute(args);
+      result = await tool.execute(args);
     } else if (tool && typeof tool.invoke === "function") {
-      return await tool.invoke(args);
+      result = await tool.invoke(args);
     } else {
       throw new Error(
         `Tool ${toolName} found but no execute/invoke method available. Tool type: ${typeof tool}, keys: ${Object.keys(tool || {}).join(", ")}`,
       );
     }
+
+    return result;
   } catch (error: any) {
+    // Only log errors in development
+    if (process.env.NODE_ENV === "development") {
+      console.log(`❌ MCP tool ${toolName} error:`, error.message);
+    }
+
     // Check if this is a 402 Payment Required error
     if (error.status === 402 || error.message?.includes("Payment Required")) {
-      console.log("💰 Payment required for MCP tool:", toolName);
+      console.log("🤖 Agent handling x402 payment for MCP tool:", toolName);
 
       if (!x402Config.enabled) {
         throw new Error("Payment required but x402 is not enabled");
       }
 
-      // Parse payment instructions from error response
-      const paymentInstructions = parsePaymentInstructions(error);
+      try {
+        // Parse payment instructions from error response
+        const paymentInstructions = parsePaymentInstructions(error);
 
-      // Handle payment
-      const paymentHandler = new X402PaymentHandler(x402Config, walletProvider);
-      const paymentPayload = await paymentHandler.handlePaymentRequired(paymentInstructions);
+        // Handle payment using the agent's wallet
+        const paymentHandler = new X402PaymentHandler(x402Config, walletProvider);
+        const paymentPayload = await paymentHandler.handlePaymentRequired(paymentInstructions);
 
-      // Retry the request with payment
-      return await retryWithPayment(tool, args, paymentPayload);
+        // Retry the request with payment
+        return await retryWithPayment(tool, args, paymentPayload);
+      } catch (paymentError) {
+        console.error("❌ Agent failed to process x402 payment:", paymentError);
+        throw new Error(
+          `Agent payment failed: ${paymentError instanceof Error ? paymentError.message : "Unknown error"}`,
+        );
+      }
     }
 
     throw error;
   }
 }
 
-// Helper function to invoke a specific tool by name (original function preserved)
+// Helper function to invoke a specific tool by name (optimized)
 async function invokeMcpTool(toolName: string, args: any) {
   const { tools } = await getMcpTools();
-
-  // Debug: Log all available tools
-  console.log("Available MCP tools:", Object.keys(tools));
-  console.log("Looking for tool:", toolName);
-  console.log(
-    "Tools object structure:",
-    Object.entries(tools).map(([key, tool]) => ({ key, tool: typeof tool, name: (tool as any)?.name })),
-  );
 
   // The tools object might be keyed by tool name directly
   let tool: any = (tools as any)[toolName];
@@ -139,35 +142,36 @@ async function invokeMcpTool(toolName: string, args: any) {
 
 // Schema definitions
 const searchSubgraphsSchema = z.object({
-  keyword: z.string().describe("Keyword to search for in subgraph names and descriptions"),
+  keyword: z.string(),
 });
 
 const getContractSubgraphsSchema = z.object({
-  contractAddress: z.string().describe("The contract address to find subgraphs for"),
-  chain: z.string().describe("The blockchain network (e.g., 'mainnet', 'polygon', 'arbitrum-one')"),
+  contractAddress: z.string(),
+  chain: z.string(),
 });
 
 const getSchemaSchema = z.object({
-  subgraphId: z.string().optional().describe("The subgraph ID (e.g., 5zvR82...)"),
-  deploymentId: z.string().optional().describe("The deployment ID (e.g., 0x...)"),
-  ipfsHash: z.string().optional().describe("The IPFS hash (e.g., Qm...)"),
+  subgraphId: z.string().optional(),
+  deploymentId: z.string().optional(),
+  ipfsHash: z.string().optional(),
 });
 
 const executeMCPQuerySchema = z.object({
-  subgraphId: z.string().optional().describe("The subgraph ID to query (e.g., 5zvR82...)"),
-  deploymentId: z.string().optional().describe("The deployment ID to query (e.g., 0x...)"),
-  ipfsHash: z.string().optional().describe("The IPFS hash to query (e.g., Qm...)"),
-  query: z.string().describe("The GraphQL query string"),
-  variables: z.record(z.any()).optional().describe("Optional variables for the GraphQL query"),
+  subgraphId: z.string().optional(),
+  deploymentId: z.string().optional(),
+  ipfsHash: z.string().optional(),
+  query: z.string(),
+  variables: z.record(z.any()).optional(),
 });
 
-export class GraphMCPProvider implements ActionProvider<WalletProvider> {
+export class GraphMCPProvider extends ActionProvider<WalletProvider> {
   name = "graph-mcp";
   actionProviders = [];
   supportsNetwork = () => true;
   private x402Config: X402Config;
 
   constructor(x402Config?: Partial<X402Config>) {
+    super("graph-mcp", []);
     // Initialize x402 configuration
     this.x402Config = {
       ...getDefaultX402Config(),
@@ -183,9 +187,8 @@ export class GraphMCPProvider implements ActionProvider<WalletProvider> {
         name: "searchSubgraphs",
         description:
           "Search for subgraphs by keyword using The Graph's MCP. Returns relevant subgraphs with metadata. Supports x402 payments.",
-        schema: searchSubgraphsSchema,
-        severity: "info" as const,
-        invoke: async ({ keyword }: z.infer<typeof searchSubgraphsSchema>) => {
+        schema: searchSubgraphsSchema as any,
+        invoke: async ({ keyword }: any) => {
           try {
             const result = this.x402Config.enabled
               ? await invokeMcpToolWithPayment(
@@ -207,9 +210,8 @@ export class GraphMCPProvider implements ActionProvider<WalletProvider> {
         name: "getContractSubgraphs",
         description:
           "Find the top subgraphs that index a specific contract address on a given blockchain. Supports x402 payments.",
-        schema: getContractSubgraphsSchema,
-        severity: "info" as const,
-        invoke: async ({ contractAddress, chain }: z.infer<typeof getContractSubgraphsSchema>) => {
+        schema: getContractSubgraphsSchema as any,
+        invoke: async ({ contractAddress, chain }: any) => {
           try {
             const result = this.x402Config.enabled
               ? await invokeMcpToolWithPayment(
@@ -237,9 +239,8 @@ export class GraphMCPProvider implements ActionProvider<WalletProvider> {
         name: "getSubgraphSchema",
         description:
           "Get the GraphQL schema for a specific subgraph, showing available entities and fields. Provide one of: subgraphId, deploymentId, or ipfsHash. Supports x402 payments.",
-        schema: getSchemaSchema,
-        severity: "info" as const,
-        invoke: async ({ subgraphId, deploymentId, ipfsHash }: z.infer<typeof getSchemaSchema>) => {
+        schema: getSchemaSchema as any,
+        invoke: async ({ subgraphId, deploymentId, ipfsHash }: any) => {
           try {
             let toolName = "";
             let toolArgs: { subgraph_id?: string; deployment_id?: string; ipfs_hash?: string } = {};
@@ -272,15 +273,8 @@ export class GraphMCPProvider implements ActionProvider<WalletProvider> {
         name: "executeMCPQuery",
         description:
           "Execute a GraphQL query against a subgraph using The Graph's MCP. Provide one of: subgraphId, deploymentId, or ipfsHash. Supports x402 payments.",
-        schema: executeMCPQuerySchema,
-        severity: "info" as const,
-        invoke: async ({
-          subgraphId,
-          deploymentId,
-          ipfsHash,
-          query,
-          variables = {},
-        }: z.infer<typeof executeMCPQuerySchema>) => {
+        schema: executeMCPQuerySchema as any,
+        invoke: async ({ subgraphId, deploymentId, ipfsHash, query, variables = {} }: any) => {
           try {
             let toolName = "";
             let toolArgs: {
@@ -318,8 +312,7 @@ export class GraphMCPProvider implements ActionProvider<WalletProvider> {
       {
         name: "listMCPTools",
         description: "List all available tools from the MCP server for debugging purposes.",
-        schema: z.object({}),
-        severity: "info" as const,
+        schema: z.object({}) as any,
         invoke: async () => {
           try {
             const { tools } = await getMcpTools();
@@ -340,6 +333,29 @@ export class GraphMCPProvider implements ActionProvider<WalletProvider> {
           } catch (error) {
             return JSON.stringify({
               error: error instanceof Error ? error.message : "Failed to list MCP tools",
+            });
+          }
+        },
+      },
+      {
+        name: "searchSubgraphsByKeyword",
+        description:
+          "Search for subgraphs by keyword to find relevant subgraphs for a contract or topic. Supports x402 payments.",
+        schema: z.object({ keyword: z.string() }) as any,
+        invoke: async ({ keyword }: any) => {
+          try {
+            const result = this.x402Config.enabled
+              ? await invokeMcpToolWithPayment(
+                  "search_subgraphs_by_keyword",
+                  { keyword },
+                  walletProvider,
+                  this.x402Config,
+                )
+              : await invokeMcpTool("search_subgraphs_by_keyword", { keyword });
+            return JSON.stringify(result, null, 2);
+          } catch (error) {
+            return JSON.stringify({
+              error: error instanceof Error ? error.message : "Failed to search subgraphs",
             });
           }
         },

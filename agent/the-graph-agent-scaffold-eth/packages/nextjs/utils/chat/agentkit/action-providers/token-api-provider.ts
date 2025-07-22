@@ -1,53 +1,69 @@
-import { ActionProvider, CreateAction, WalletProvider, Network } from "@coinbase/agentkit";
-import { z } from "zod";
+import {
+  GetHistoricalBalancesAgentParamsSchema,
+  GetNFTActivitiesAgentParamsSchema, // NFT schemas
+  GetNFTCollectionsAgentParamsSchema,
+  GetNFTHoldersAgentParamsSchema,
+  GetNFTItemsAgentParamsSchema,
+  GetNFTOwnershipsAgentParamsSchema,
+  GetNFTSalesAgentParamsSchema,
+  GetTokenDetailsAgentParamsSchema,
+  GetTokenHoldersAgentParamsSchema,
+  GetTokenMetadataAgentParamsSchema,
+  GetTokenOHLCByContractAgentParamsSchema,
+  GetTokenOHLCByPoolAgentParamsSchema,
+  GetTokenPoolsAgentParamsSchema,
+  GetTokenSwapsAgentParamsSchema,
+  GetTokenTransfersAgentParamsSchema, // TokenBalanceSchema, // Not directly used in this file anymore for agent response type, but good for reference
+  NetworkIdSchema,
+  TokenBalancesParamsSchema,
+} from "../token-api/schemas";
 import { fetchTokenBalances } from "../token-api/utils";
 import type { TokenBalancesParams } from "../token-api/utils";
 import {
-  TokenBalancesParamsSchema,
-  // TokenBalanceSchema, // Not directly used in this file anymore for agent response type, but good for reference
-  NetworkIdSchema,
-  GetTokenDetailsAgentParamsSchema,
-  GetTokenTransfersAgentParamsSchema,
-  GetTokenMetadataAgentParamsSchema,
-  GetTokenHoldersAgentParamsSchema,
-  GetTokenPoolsAgentParamsSchema,
-  GetTokenSwapsAgentParamsSchema,
-  GetTokenOHLCByContractAgentParamsSchema,
-  GetTokenOHLCByPoolAgentParamsSchema,
-  GetHistoricalBalancesAgentParamsSchema,
-  // NFT schemas
-  GetNFTCollectionsAgentParamsSchema,
-  GetNFTItemsAgentParamsSchema,
-  GetNFTSalesAgentParamsSchema,
-  GetNFTHoldersAgentParamsSchema,
-  GetNFTOwnershipsAgentParamsSchema,
-  GetNFTActivitiesAgentParamsSchema,
-} from "../token-api/schemas";
-import { fetchTokenDetails, fetchTokenTransfers, fetchTokenMetadata, fetchTokenHolders, fetchTokenPools, fetchTokenSwaps, fetchTokenOHLCByContract, fetchTokenOHLCByPool, fetchHistoricalBalances, fetchNFTCollections, fetchNFTItems, fetchNFTSales, fetchNFTHolders, fetchNFTOwnerships, fetchNFTActivities } from "../token-api/utils";
-import type { TokenDetailsParams, TokenTransfersParams, TokenMetadataParams, TokenHoldersParams, PoolsParams, SwapsParams, ContractOHLCParams, PoolOHLCParams, HistoricalBalancesParams } from "../token-api/utils";
+  fetchHistoricalBalances,
+  fetchNFTActivities,
+  fetchNFTCollections,
+  fetchNFTHolders,
+  fetchNFTItems,
+  fetchNFTOwnerships,
+  fetchNFTSales,
+  fetchTokenDetails,
+  fetchTokenHolders,
+  fetchTokenMetadata,
+  fetchTokenOHLCByContract,
+  fetchTokenOHLCByPool,
+  fetchTokenPools,
+  fetchTokenSwaps,
+  fetchTokenTransfers,
+} from "../token-api/utils";
+import type {
+  ContractOHLCParams,
+  HistoricalBalancesParams,
+  PoolOHLCParams,
+  PoolsParams,
+  SwapsParams,
+  TokenDetailsParams,
+  TokenHoldersParams,
+  TokenMetadataParams,
+  TokenTransfersParams,
+} from "../token-api/utils";
 import type { X402Config } from "../x402";
+import { createForcePaymentWrapper } from "../x402";
+import { ActionProvider, CreateAction, Network, WalletProvider } from "@coinbase/agentkit";
+import { z } from "zod";
 
 // Define the schema for the arguments the agent will provide for getTokenBalances
 const GetTokenBalancesAgentParamsSchema = z.object({
-  address: z.string().describe("The wallet address (e.g., 0x... or ENS name). ENS names need prior resolution to an address."),
+  address: z
+    .string()
+    .describe("The wallet address (e.g., 0x... or ENS name). ENS names need prior resolution to an address."),
   networkId: NetworkIdSchema.optional().describe("Optional network ID to filter by (e.g., mainnet, bsc)."),
-  contractAddresses: z.array(z.string()).optional().describe("Optional list of specific token contract addresses to fetch."),
-  minAmountUsd: z.number().optional().describe("Optional minimum USD value for a balance to be included.")
+  contractAddresses: z
+    .array(z.string())
+    .optional()
+    .describe("Optional list of specific token contract addresses to fetch."),
+  minAmountUsd: z.number().optional().describe("Optional minimum USD value for a balance to be included."),
 });
-
-// Helper function to validate payment for X402
-const validatePayment = (config: X402Config, actionName: string): void => {
-  if (config.enabled) {
-    // Check if we're in a chat context (payment handled at route level)
-    if (process.env.NODE_ENV === "development" && config.skipValidation) {
-      return; // Skip validation in chat context
-    }
-    
-    // In a real implementation, you would validate payment headers here
-    // For now, we'll throw an error to trigger the 402 response
-    throw new Error(`Payment Required for ${actionName}. Please provide valid payment authorization.`);
-  }
-};
 
 class TokenApiProvider extends ActionProvider<WalletProvider> {
   private x402Config: X402Config;
@@ -58,7 +74,7 @@ class TokenApiProvider extends ActionProvider<WalletProvider> {
       // Description (second arg) is not part of the base ActionProvider constructor based on common patterns.
       // The base ActionProvider constructor usually takes (name: string, tools: TTool[]).
       // Let's assume no specific tools are being injected into this provider itself.
-      [] // Pass an empty array for tools if none are specifically associated with this provider instance
+      [], // Pass an empty array for tools if none are specifically associated with this provider instance
     );
     this.x402Config = x402Config;
   }
@@ -71,59 +87,46 @@ class TokenApiProvider extends ActionProvider<WalletProvider> {
     return true;
   };
 
-  @CreateAction({
-    name: "get-token-balances",
-    description: "Fetches ERC20 token balances for a given wallet address. Can filter by network or specific tokens.",
-    schema: GetTokenBalancesAgentParamsSchema,
-  })
-  async getTokenBalances(
-    _walletProvider: WalletProvider,
-    args: z.TypeOf<typeof GetTokenBalancesAgentParamsSchema>
-  ): Promise<string> {
-    console.log(`[TokenApiProvider] Action: getTokenBalances invoked. Args: ${JSON.stringify(args)}`);
-
-    // Validate payment if X402 is enabled
-    validatePayment(this.x402Config, "getTokenBalances");
+  async getTokenBalances(_walletProvider: WalletProvider, args: any): Promise<string> {
+    // Agent handles x402 payments automatically - no validation needed here
 
     if (!args.address) {
-      console.error("[TokenApiProvider] Error: Wallet address is required.");
       return "Error: Wallet address is required.";
     }
 
     const fetchParams: TokenBalancesParams = {
       network_id: args.networkId,
     };
-    console.log(`[TokenApiProvider] Calling fetchTokenBalances with address: ${args.address}, params: ${JSON.stringify(fetchParams)}`);
 
     try {
-      const response = await fetchTokenBalances(args.address, fetchParams);
-      console.log(`[TokenApiProvider] fetchTokenBalances response: ${JSON.stringify(response)}`);
+      // Create a wrapped version of fetchTokenBalances that forces x402 payments if enabled
+      const wrappedFetchTokenBalances = createForcePaymentWrapper(fetchTokenBalances, this.x402Config, _walletProvider);
+
+      const response = await wrappedFetchTokenBalances(args.address, fetchParams);
 
       if (response.error) {
-        console.error(`[TokenApiProvider] Error from fetchTokenBalances: ${response.error.message}`);
         return `Error fetching token balances: ${response.error.message} (Status: ${response.error.status})`;
       }
 
       if (!response.data || response.data.length === 0) {
         console.log(`[TokenApiProvider] No token balances found for address ${args.address}`);
-        return `No token balances found for address ${args.address} ${args.networkId ? 'on ' + args.networkId : ''}.`;
+        return `No token balances found for address ${args.address} ${args.networkId ? "on " + args.networkId : ""}.`;
       }
 
       let results = response.data;
 
       // Client-side filtering (post-fetch)
       if (args.contractAddresses && args.contractAddresses.length > 0) {
-        console.log(`[TokenApiProvider] Filtering balances for contracts: ${args.contractAddresses.join(", ")}`);
-        const lowerCaseContracts = args.contractAddresses.map(c => c.toLowerCase());
+        const lowerCaseContracts = args.contractAddresses.map((c: string) => c.toLowerCase());
         results = results.filter(balance => lowerCaseContracts.includes(balance.contract_address.toLowerCase()));
       }
       if (args.minAmountUsd !== undefined) {
-        console.log(`[TokenApiProvider] Filtering balances with min USD value: ${args.minAmountUsd}`);
-        results = results.filter(balance => balance.amount_usd !== undefined && balance.amount_usd >= args.minAmountUsd!);
+        results = results.filter(
+          balance => balance.amount_usd !== undefined && balance.amount_usd >= args.minAmountUsd!,
+        );
       }
 
       if (results.length === 0) {
-         console.log(`[TokenApiProvider] No balances matched criteria for address ${args.address}`);
         return `No token balances matched the specified criteria for address ${args.address}.`;
       }
 
@@ -133,40 +136,28 @@ class TokenApiProvider extends ActionProvider<WalletProvider> {
         valueUSD: b.amount_usd?.toFixed(2),
         network: b.network_id,
       }));
-      
-      const resultString = JSON.stringify(formattedResults, null, 2);
-      console.log(`[TokenApiProvider] Successfully formatted ${formattedResults.length} balances.`);
-      // Avoid logging potentially huge strings
-      // console.log(`[TokenApiProvider] Result string: ${resultString}`); 
-      return resultString;
 
+      return JSON.stringify(formattedResults, null, 2);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
-      console.error(`[TokenApiProvider] Unexpected error in getTokenBalances action: ${errorMessage}`, error);
       return `Error: ${errorMessage}`;
     }
   }
 
-  @CreateAction({
-    name: "get-token-details",
-    description: "Fetches details for a specific token contract (e.g., name, symbol, decimals).",
-    schema: GetTokenDetailsAgentParamsSchema,
-  })
   async getTokenDetails(
     _walletProvider: WalletProvider, // Included for consistency with ActionProvider type
-    args: z.TypeOf<typeof GetTokenDetailsAgentParamsSchema>
+    args: any,
   ): Promise<string> {
     console.log(`Action: getTokenDetails, Args: ${JSON.stringify(args)}`);
 
-    // Validate payment if X402 is enabled
-    validatePayment(this.x402Config, "getTokenDetails");
+    // Agent handles x402 payments automatically - no validation needed here
 
     if (!args.contractAddress) {
       return "Error: Contract address is required to get token details.";
     }
 
     // Assuming cleanContractAddress might be needed here too, or applied in fetchTokenDetails.
-    // For now, pass as is. If cleanContractAddress is from a UI utility, 
+    // For now, pass as is. If cleanContractAddress is from a UI utility,
     // consider making a non-UI version available for agentkit utils or apply here.
     // const normalizedContract = cleanContractAddress(args.contractAddress); // Example if needed
     const normalizedContract = args.contractAddress; // Assuming it's already clean or handled by API/fetch util
@@ -176,20 +167,22 @@ class TokenApiProvider extends ActionProvider<WalletProvider> {
     };
 
     try {
-      const response = await fetchTokenDetails(normalizedContract, fetchParams);
+      // Create a wrapped version of fetchTokenDetails that forces x402 payments if enabled
+      const wrappedFetchTokenDetails = createForcePaymentWrapper(fetchTokenDetails, this.x402Config, _walletProvider);
+
+      const response = await wrappedFetchTokenDetails(normalizedContract, fetchParams);
 
       if (response.error) {
         return `Error fetching token details: ${response.error.message} (Status: ${response.error.status})`;
       }
 
       if (!response.data) {
-        return `No details found for contract ${args.contractAddress} ${args.networkId ? 'on ' + args.networkId : ''}.`;
+        return `No details found for contract ${args.contractAddress} ${args.networkId ? "on " + args.networkId : ""}.`;
       }
 
       // Format for the agent. Can be a summary or JSON string.
       // Adjust formatting as needed for the agent's consumption.
       return JSON.stringify(response.data, null, 2);
-
     } catch (error) {
       console.error("Error in getTokenDetails action:", error);
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
@@ -197,127 +190,77 @@ class TokenApiProvider extends ActionProvider<WalletProvider> {
     }
   }
 
-  @CreateAction({
-    name: "get-token-transfers",
-    description: "Fetches token transfers involving a specific address or contract. Can filter by sender, receiver, date range, etc. If addressRole is not specified, defaults to showing incoming transfers (receiver). If no time filters are provided, automatically applies a 7-day lookback to prevent API timeouts.",
-    schema: GetTokenTransfersAgentParamsSchema,
-  })
   async getTokenTransfers(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.TypeOf<typeof GetTokenTransfersAgentParamsSchema>
+    args: any,
   ): Promise<string> {
-    console.log(`Action: getTokenTransfers, Args: ${JSON.stringify(args)}`);
+    // Agent handles x402 payments automatically - no validation needed here
 
-    // Validate payment if X402 is enabled
-    validatePayment(this.x402Config, "getTokenTransfers");
-
-    const { address, addressRole, fromAddress, toAddress, age, startTime, endTime, ...otherParams } = args;
-
-    let finalToAddress: string | undefined = toAddress;
-    let finalFromAddress: string | undefined = fromAddress;
-
-    if (address) {
-      // Default to "receiver" if no role is specified (most common use case)
-      const role = addressRole || "receiver";
-      
-      if (role === "receiver" && !finalToAddress) {
-        finalToAddress = address;
-      } else if (role === "sender" && !finalFromAddress) {
-        finalFromAddress = address;
-      } else if (role === "either") {
-        // For "either", we'll default to receiver for now
-        // TODO: In the future, this could make two API calls and merge results
-        if (!finalToAddress) finalToAddress = address;
-        console.log(`📝 Note: Using address as receiver for "either" role. Consider making separate queries for complete results.`);
-      }
-    }
-    
-    // More specific error message with guidance
-    if (!finalToAddress && !finalFromAddress && !otherParams.contract) {
-        return `Error: Please specify one of the following:
-- An address with a role (receiver/sender/either) 
-- A fromAddress (sender)
-- A toAddress (receiver)  
-- A contract address to filter by
-
-Examples:
-- To see incoming transfers: specify addressRole as "receiver" (this is the default)
-- To see outgoing transfers: specify addressRole as "sender"
-- To see transfers for a specific token: provide the contract address`;
+    if (!args.contractAddress) {
+      return "Error: Contract address is required to get token transfers.";
     }
 
-    // Handle time filtering - prefer startTime/endTime over age to avoid timeouts
-    let finalStartTime: number | undefined = startTime;
-    let finalEndTime: number | undefined = endTime;
-    let finalAge: number | undefined = age;
-
-    // If age is provided but no explicit start/end times, convert age to timestamps
-    // This helps avoid API timeouts for large datasets
-    if (age && !startTime && !endTime) {
-      const now = Math.floor(Date.now() / 1000); // Current time in seconds
-      finalEndTime = now;
-      finalStartTime = now - (age * 24 * 60 * 60); // Convert days to seconds
-      finalAge = undefined; // Remove age since we're using timestamps
+    if (!args.networkId) {
+      return "Error: Network ID is required to get token transfers.";
     }
 
-    // If NO time filtering is provided at all, default to last 7 days to prevent timeouts
-    if (!age && !startTime && !endTime) {
-      const now = Math.floor(Date.now() / 1000);
-      finalEndTime = now;
-      finalStartTime = now - (7 * 24 * 60 * 60); // Default to 7 days
-      console.log(`📅 No time filter provided. Defaulting to last 7 days to prevent API timeout.`);
-    }
-
-    // Prepare parameters for the fetchTokenTransfers utility
-    // The utility expects `toAddress` as first arg, and other params (including `from`) in the second.
-    const utilityParams: Omit<TokenTransfersParams, 'to'> = {
-        ...otherParams, // network_id, contract, limit, etc.
-        from: finalFromAddress, // This can be undefined, and fetchTokenTransfers handles it
-        age: finalAge, // Only use age if startTime/endTime are not set
-        startTime: finalStartTime,
-        endTime: finalEndTime,
+    const fetchParams: Omit<TokenTransfersParams, "to"> = {
+      network_id: args.networkId,
+      contract: args.contractAddress,
+      limit: args.limit || 50,
     };
 
+    if (args.fromAddress) {
+      fetchParams.from = args.fromAddress;
+    }
+
+    if (args.limit) {
+      fetchParams.limit = args.limit;
+    }
+
     try {
-      // finalToAddress is the first argument to fetchTokenTransfers
-      const response = await fetchTokenTransfers(finalToAddress, utilityParams);
+      // Create a wrapped version of fetchTokenTransfers that forces x402 payments if enabled
+      const wrappedFetchTokenTransfers = createForcePaymentWrapper(
+        fetchTokenTransfers,
+        this.x402Config,
+        _walletProvider,
+      );
+
+      const response = await wrappedFetchTokenTransfers(args.toAddress || undefined, fetchParams);
 
       if (response.error) {
         return `Error fetching token transfers: ${response.error.message} (Status: ${response.error.status})`;
       }
 
       if (!response.data || !response.data.transfers || response.data.transfers.length === 0) {
-        const roleText = addressRole || "receiver";
-        return `No token transfers found for address ${address} as ${roleText} on ${otherParams.network_id || 'mainnet'}. Try:
-- Different addressRole (sender/receiver/either)
-- Different network
-- Longer time period
-- Check if the address has any token activity`;
+        return `No token transfers found for contract ${args.contractAddress} on network ${args.networkId}.`;
       }
 
-      // The response.data from fetchTokenTransfers includes { transfers: [], pagination: {}, ... }
-      return JSON.stringify(response.data, null, 2);
+      const formattedResults = response.data.transfers.map((transfer: any) => ({
+        from: transfer.from,
+        to: transfer.to,
+        amount: transfer.amount,
+        valueUSD: transfer.value_usd?.toFixed(2),
+        transactionHash: transfer.transaction_id,
+        blockNumber: transfer.block_num,
+        timestamp: transfer.timestamp,
+        network: transfer.network_id,
+      }));
 
+      return JSON.stringify(formattedResults, null, 2);
     } catch (error) {
-      console.error("Error in getTokenTransfers action:", error);
-      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
-      return `Error: ${message}`;
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
+      return `Error: ${errorMessage}`;
     }
   }
 
-  @CreateAction({
-    name: "get-token-metadata",
-    description: "Fetches metadata for a specific token contract, like name, symbol, decimals, supply, and optionally market data.",
-    schema: GetTokenMetadataAgentParamsSchema,
-  })
   async getTokenMetadata(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.TypeOf<typeof GetTokenMetadataAgentParamsSchema>
+    args: any,
   ): Promise<string> {
     console.log(`Action: getTokenMetadata, Args: ${JSON.stringify(args)}`);
 
-    // Validate payment if X402 is enabled
-    validatePayment(this.x402Config, "getTokenMetadata");
+    // Agent handles x402 payments automatically - no validation needed here
 
     if (!args.contractAddress) {
       return "Error: Contract address is required to get token metadata.";
@@ -337,11 +280,10 @@ Examples:
       }
 
       if (!response.data) {
-        return `No metadata found for contract ${args.contractAddress} ${args.networkId ? 'on ' + args.networkId : ''}.`;
+        return `No metadata found for contract ${args.contractAddress} ${args.networkId ? "on " + args.networkId : ""}.`;
       }
 
       return JSON.stringify(response.data, null, 2);
-
     } catch (error) {
       console.error("Error in getTokenMetadata action:", error);
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
@@ -349,19 +291,13 @@ Examples:
     }
   }
 
-  @CreateAction({
-    name: "get-token-holders",
-    description: "Fetches a list of token holders for a specific token contract, with optional pagination.",
-    schema: GetTokenHoldersAgentParamsSchema,
-  })
   async getTokenHolders(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.TypeOf<typeof GetTokenHoldersAgentParamsSchema>
+    args: any,
   ): Promise<string> {
     console.log(`Action: getTokenHolders, Args: ${JSON.stringify(args)}`);
 
-    // Validate payment if X402 is enabled
-    validatePayment(this.x402Config, "getTokenHolders");
+    // Agent handles x402 payments automatically - no validation needed here
 
     if (!args.contractAddress) {
       return "Error: Contract address is required to get token holders.";
@@ -383,12 +319,11 @@ Examples:
       }
 
       if (!response.data || !response.data.holders || response.data.holders.length === 0) {
-        return `No holders found for contract ${args.contractAddress} ${args.networkId ? 'on ' + args.networkId : ''}.`;
+        return `No holders found for contract ${args.contractAddress} ${args.networkId ? "on " + args.networkId : ""}.`;
       }
-      
+
       // response.data is TokenHoldersData, which includes the holders array and pagination/stats
       return JSON.stringify(response.data, null, 2);
-
     } catch (error) {
       console.error("Error in getTokenHolders action:", error);
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
@@ -396,23 +331,18 @@ Examples:
     }
   }
 
-  @CreateAction({
-    name: "get-token-pools",
-    description: "Fetches liquidity pools. Can be filtered by network, token, pool address, symbol, factory, or protocol. Supports pagination and sorting.",
-    schema: GetTokenPoolsAgentParamsSchema,
-  })
   async getTokenPools(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.TypeOf<typeof GetTokenPoolsAgentParamsSchema>
+    args: any,
   ): Promise<string> {
     console.log(`Action: getTokenPools, Args: ${JSON.stringify(args)}`);
 
     const { tokenAddress, poolAddress, ...otherFilters } = args;
 
     const fetchParams: PoolsParams = {
-      ...otherFilters, 
-      token: tokenAddress, 
-      pool: poolAddress,   
+      ...otherFilters,
+      token: tokenAddress,
+      pool: poolAddress,
     };
 
     try {
@@ -430,9 +360,8 @@ Examples:
         message += ".";
         return message;
       }
-      
-      return JSON.stringify(response.data, null, 2);
 
+      return JSON.stringify(response.data, null, 2);
     } catch (error) {
       console.error("Error in getTokenPools action:", error);
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
@@ -440,14 +369,9 @@ Examples:
     }
   }
 
-  @CreateAction({
-    name: "get-token-swaps",
-    description: "Fetches token swap transactions. Requires a network ID and can be filtered by pool, caller, sender, recipient, transaction hash, or protocol. Supports pagination.",
-    schema: GetTokenSwapsAgentParamsSchema,
-  })
   async getTokenSwaps(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.TypeOf<typeof GetTokenSwapsAgentParamsSchema>
+    args: any,
   ): Promise<string> {
     console.log(`Action: getTokenSwaps, Args: ${JSON.stringify(args)}`);
 
@@ -461,7 +385,7 @@ Examples:
     const fetchParams: SwapsParams = {
       ...otherFilters, // Includes network_id, caller, sender, recipient, protocol, page, page_size
       tx_hash: transactionHash, // Map agent-friendly name to utility param name
-      pool: poolAddress,      // Map agent-friendly name to utility param name
+      pool: poolAddress, // Map agent-friendly name to utility param name
     };
 
     try {
@@ -478,10 +402,9 @@ Examples:
         message += ".";
         return message;
       }
-      
+
       // response.data is SwapsResponseData, includes swaps array and pagination/total
       return JSON.stringify(response.data, null, 2);
-
     } catch (error) {
       console.error("Error in getTokenSwaps action:", error);
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
@@ -489,14 +412,9 @@ Examples:
     }
   }
 
-  @CreateAction({
-    name: "get-token-ohlc-by-contract",
-    description: "Fetches Open, High, Low, Close (OHLC) price data for a specific token contract. Requires contract address. Can specify network, resolution, time range, and limit.",
-    schema: GetTokenOHLCByContractAgentParamsSchema,
-  })
   async getTokenOHLCByContract(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.TypeOf<typeof GetTokenOHLCByContractAgentParamsSchema>
+    args: any,
   ): Promise<string> {
     console.log(`Action: getTokenOHLCByContract, Args: ${JSON.stringify(args)}`);
 
@@ -527,9 +445,8 @@ Examples:
         message += ".";
         return message;
       }
-      
-      return JSON.stringify(response.data, null, 2);
 
+      return JSON.stringify(response.data, null, 2);
     } catch (error) {
       console.error("Error in getTokenOHLCByContract action:", error);
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
@@ -537,14 +454,9 @@ Examples:
     }
   }
 
-  @CreateAction({
-    name: "get-token-ohlc-by-pool",
-    description: "Fetches Open, High, Low, Close (OHLC) price data for a specific liquidity pool. Requires pool address. Can specify network, resolution, time range, involved token, and pagination.",
-    schema: GetTokenOHLCByPoolAgentParamsSchema,
-  })
   async getTokenOHLCByPool(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.TypeOf<typeof GetTokenOHLCByPoolAgentParamsSchema>
+    args: any,
   ): Promise<string> {
     console.log(`Action: getTokenOHLCByPool, Args: ${JSON.stringify(args)}`);
 
@@ -578,9 +490,8 @@ Examples:
         message += ".";
         return message;
       }
-      
-      return JSON.stringify(response.data, null, 2);
 
+      return JSON.stringify(response.data, null, 2);
     } catch (error) {
       console.error("Error in getTokenOHLCByPool action:", error);
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
@@ -588,14 +499,9 @@ Examples:
     }
   }
 
-  @CreateAction({
-    name: "get-historical-balances",
-    description: "Fetches the historical token balances for a wallet address. Can optionally filter by a specific token contract, time range, and resolution (day/hour).",
-    schema: GetHistoricalBalancesAgentParamsSchema,
-  })
   async getHistoricalBalances(
     _walletProvider: WalletProvider, // Included for consistency
-    args: z.TypeOf<typeof GetHistoricalBalancesAgentParamsSchema>
+    args: any,
   ): Promise<string> {
     console.log(`Action: getHistoricalBalances, Args: ${JSON.stringify(args)}`);
 
@@ -627,9 +533,8 @@ Examples:
         message += ".";
         return message;
       }
-      
-      return JSON.stringify(response.data, null, 2);
 
+      return JSON.stringify(response.data, null, 2);
     } catch (error) {
       console.error("Error in getHistoricalBalances action:", error);
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
@@ -639,19 +544,10 @@ Examples:
 
   // --- NFT Actions ---
 
-  @CreateAction({
-    name: "get-nft-collections",
-    description: "Fetches NFT collection data for a specific contract address. Returns collection metadata including name, symbol, total supply, and owner count.",
-    schema: GetNFTCollectionsAgentParamsSchema,
-  })
-  async getNFTCollections(
-    _walletProvider: WalletProvider,
-    args: z.TypeOf<typeof GetNFTCollectionsAgentParamsSchema>
-  ): Promise<string> {
+  async getNFTCollections(_walletProvider: WalletProvider, args: any): Promise<string> {
     console.log(`Action: getNFTCollections, Args: ${JSON.stringify(args)}`);
 
-    // Validate payment if X402 is enabled
-    validatePayment(this.x402Config, "getNFTCollections");
+    // Agent handles x402 payments automatically - no validation needed here
 
     if (!args.contractAddress) {
       return "Error: Contract address is required to get NFT collection data.";
@@ -667,7 +563,7 @@ Examples:
       }
 
       if (!response.data || response.data.length === 0) {
-        return `No NFT collection found for contract ${args.contractAddress}${args.networkId ? ` on ${args.networkId}` : ''}.`;
+        return `No NFT collection found for contract ${args.contractAddress}${args.networkId ? ` on ${args.networkId}` : ""}.`;
       }
 
       return JSON.stringify(response.data, null, 2);
@@ -678,15 +574,7 @@ Examples:
     }
   }
 
-  @CreateAction({
-    name: "get-nft-items",
-    description: "Fetches details for a specific NFT item by contract address and token ID. Returns metadata, owner, and attributes.",
-    schema: GetNFTItemsAgentParamsSchema,
-  })
-  async getNFTItems(
-    _walletProvider: WalletProvider,
-    args: z.TypeOf<typeof GetNFTItemsAgentParamsSchema>
-  ): Promise<string> {
+  async getNFTItems(_walletProvider: WalletProvider, args: any): Promise<string> {
     console.log(`Action: getNFTItems, Args: ${JSON.stringify(args)}`);
 
     if (!args.contractAddress || !args.tokenId) {
@@ -703,7 +591,7 @@ Examples:
       }
 
       if (!response.data || response.data.length === 0) {
-        return `No NFT item found for contract ${args.contractAddress} token ID ${args.tokenId}${args.networkId ? ` on ${args.networkId}` : ''}.`;
+        return `No NFT item found for contract ${args.contractAddress} token ID ${args.tokenId}${args.networkId ? ` on ${args.networkId}` : ""}.`;
       }
 
       return JSON.stringify(response.data, null, 2);
@@ -714,15 +602,7 @@ Examples:
     }
   }
 
-  @CreateAction({
-    name: "get-nft-sales",
-    description: "Fetches NFT sales data. Can filter by network, addresses (buyer/seller), contract, time range, and pagination.",
-    schema: GetNFTSalesAgentParamsSchema,
-  })
-  async getNFTSales(
-    _walletProvider: WalletProvider,
-    args: z.TypeOf<typeof GetNFTSalesAgentParamsSchema>
-  ): Promise<string> {
+  async getNFTSales(_walletProvider: WalletProvider, args: any): Promise<string> {
     console.log(`Action: getNFTSales, Args: ${JSON.stringify(args)}`);
 
     try {
@@ -745,7 +625,7 @@ Examples:
       }
 
       if (!response.data || response.data.length === 0) {
-        return `No NFT sales found${args.networkId ? ` on ${args.networkId}` : ''} with the specified criteria.`;
+        return `No NFT sales found${args.networkId ? ` on ${args.networkId}` : ""} with the specified criteria.`;
       }
 
       return JSON.stringify(response.data, null, 2);
@@ -756,15 +636,7 @@ Examples:
     }
   }
 
-  @CreateAction({
-    name: "get-nft-holders",
-    description: "Fetches NFT holders for a specific contract address. Returns list of addresses and their token counts with pagination support.",
-    schema: GetNFTHoldersAgentParamsSchema,
-  })
-  async getNFTHolders(
-    _walletProvider: WalletProvider,
-    args: z.TypeOf<typeof GetNFTHoldersAgentParamsSchema>
-  ): Promise<string> {
+  async getNFTHolders(_walletProvider: WalletProvider, args: any): Promise<string> {
     console.log(`Action: getNFTHolders, Args: ${JSON.stringify(args)}`);
 
     if (!args.contractAddress) {
@@ -783,7 +655,7 @@ Examples:
       }
 
       if (!response.data || !response.data.data || response.data.data.length === 0) {
-        return `No NFT holders found for contract ${args.contractAddress}${args.networkId ? ` on ${args.networkId}` : ''}.`;
+        return `No NFT holders found for contract ${args.contractAddress}${args.networkId ? ` on ${args.networkId}` : ""}.`;
       }
 
       return JSON.stringify(response.data, null, 2);
@@ -794,15 +666,7 @@ Examples:
     }
   }
 
-  @CreateAction({
-    name: "get-nft-ownerships",
-    description: "Fetches NFT ownerships for a specific wallet address. Returns all NFTs owned by the address, optionally filtered by contract.",
-    schema: GetNFTOwnershipsAgentParamsSchema,
-  })
-  async getNFTOwnerships(
-    _walletProvider: WalletProvider,
-    args: z.TypeOf<typeof GetNFTOwnershipsAgentParamsSchema>
-  ): Promise<string> {
+  async getNFTOwnerships(_walletProvider: WalletProvider, args: any): Promise<string> {
     console.log(`Action: getNFTOwnerships, Args: ${JSON.stringify(args)}`);
 
     if (!args.ownerAddress) {
@@ -820,7 +684,7 @@ Examples:
       }
 
       if (!response.data || response.data.length === 0) {
-        return `No NFT ownerships found for address ${args.ownerAddress}${args.networkId ? ` on ${args.networkId}` : ''}${args.contractAddress ? ` for contract ${args.contractAddress}` : ''}.`;
+        return `No NFT ownerships found for address ${args.ownerAddress}${args.networkId ? ` on ${args.networkId}` : ""}${args.contractAddress ? ` for contract ${args.contractAddress}` : ""}.`;
       }
 
       return JSON.stringify(response.data, null, 2);
@@ -831,15 +695,7 @@ Examples:
     }
   }
 
-  @CreateAction({
-    name: "get-nft-activities",
-    description: "Fetches NFT activities (transfers, mints, burns, etc.). Can filter by network, contract, addresses, token ID, activity type, time range, and pagination.",
-    schema: GetNFTActivitiesAgentParamsSchema,
-  })
-  async getNFTActivities(
-    _walletProvider: WalletProvider,
-    args: z.TypeOf<typeof GetNFTActivitiesAgentParamsSchema>
-  ): Promise<string> {
+  async getNFTActivities(_walletProvider: WalletProvider, args: any): Promise<string> {
     console.log(`Action: getNFTActivities, Args: ${JSON.stringify(args)}`);
 
     try {
@@ -861,7 +717,7 @@ Examples:
       }
 
       if (!response.data || response.data.length === 0) {
-        return `No NFT activities found${args.networkId ? ` on ${args.networkId}` : ''} with the specified criteria.`;
+        return `No NFT activities found${args.networkId ? ` on ${args.networkId}` : ""} with the specified criteria.`;
       }
 
       return JSON.stringify(response.data, null, 2);
@@ -871,6 +727,185 @@ Examples:
       return `Error: ${message}`;
     }
   }
+
+  getActions(walletProvider: WalletProvider) {
+    return [
+      {
+        name: "getTokenBalances",
+        description:
+          "Get token balances for a wallet address. Use this for any wallet address to see their ERC20 token holdings.",
+        schema: GetTokenBalancesAgentParamsSchema as any,
+        invoke: async (args: any) => this.getTokenBalances(walletProvider, args),
+      },
+      {
+        name: "getCommonTokenAddress",
+        description:
+          "Get the contract address for common tokens like USDC, ETH, etc. Use this to find token contract addresses.",
+        schema: z.object({
+          tokenName: z.string().describe("The token name (e.g., USDC, ETH, DAI, WETH)"),
+          networkId: z
+            .enum(["mainnet", "bsc", "base", "arbitrum-one", "optimism", "matic", "unichain"])
+            .describe("The network ID"),
+        }) as any,
+        invoke: async (args: any) => {
+          const commonTokens: Record<string, Record<string, string>> = {
+            mainnet: {
+              USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+              WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+              DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+              USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+              WBTC: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+            },
+            "arbitrum-one": {
+              USDC: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+              WETH: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+              DAI: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+              USDT: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            },
+            polygon: {
+              USDC: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+              WETH: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+              DAI: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+              USDT: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+            },
+          };
+
+          const { tokenName, networkId } = args;
+          const networkTokens = commonTokens[networkId];
+
+          if (!networkTokens) {
+            return JSON.stringify(
+              {
+                error: `Network ${networkId} not supported for common token lookup`,
+                supportedNetworks: Object.keys(commonTokens),
+              },
+              null,
+              2,
+            );
+          }
+
+          const address = networkTokens[tokenName.toUpperCase()];
+          if (!address) {
+            return JSON.stringify(
+              {
+                error: `Token ${tokenName} not found on ${networkId}`,
+                availableTokens: Object.keys(networkTokens),
+              },
+              null,
+              2,
+            );
+          }
+
+          return JSON.stringify(
+            {
+              tokenName: tokenName.toUpperCase(),
+              networkId,
+              contractAddress: address,
+            },
+            null,
+            2,
+          );
+        },
+      },
+      {
+        name: "getTokenTransfers",
+        description:
+          "Get token transfers for a specific token contract. Use this to see transfer history for tokens like USDC, ETH, etc.",
+        schema: z.object({
+          contractAddress: z.string().describe("The token contract address (e.g., USDC contract address)"),
+          networkId: z
+            .enum(["mainnet", "bsc", "base", "arbitrum-one", "optimism", "matic", "unichain"])
+            .describe("The network ID"),
+          fromAddress: z.string().optional().describe("Optional: Filter transfers from this address"),
+          toAddress: z.string().optional().describe("Optional: Filter transfers to this address"),
+          limit: z.number().optional().default(50).describe("Number of transfers to return (default: 50)"),
+        }) as any,
+        invoke: async (args: any) => this.getTokenTransfers(walletProvider, args),
+      },
+      {
+        name: "getTokenDetails",
+        description: "Get detailed information about a specific token contract.",
+        schema: z.object({
+          contractAddress: z.string().describe("The token contract address"),
+          networkId: z
+            .enum(["mainnet", "bsc", "base", "arbitrum-one", "optimism", "matic", "unichain"])
+            .describe("The network ID"),
+          includeMarketData: z.boolean().optional().default(false).describe("Whether to include market data"),
+        }) as any,
+        invoke: async (args: any) => this.getTokenDetails(walletProvider, args),
+      },
+      {
+        name: "getTokenMetadata",
+        description: "Get metadata for a specific token contract.",
+        schema: z.object({
+          contractAddress: z.string().describe("The token contract address"),
+          networkId: z
+            .enum(["mainnet", "bsc", "base", "arbitrum-one", "optimism", "matic", "unichain"])
+            .describe("The network ID"),
+          includeMarketData: z.boolean().optional().default(false).describe("Whether to include market data"),
+        }) as any,
+        invoke: async (args: any) => this.getTokenMetadata(walletProvider, args),
+      },
+      {
+        name: "getTokenHolders",
+        description: "Get token holders for a specific token contract.",
+        schema: z.object({
+          contractAddress: z.string().describe("The token contract address"),
+          networkId: z
+            .enum(["mainnet", "bsc", "base", "arbitrum-one", "optimism", "matic", "unichain"])
+            .describe("The network ID"),
+          page: z.number().optional().default(1).describe("Page number"),
+          pageSize: z.number().optional().default(20).describe("Number of holders per page"),
+        }) as any,
+        invoke: async (args: any) => this.getTokenHolders(walletProvider, args),
+      },
+      {
+        name: "getHistoricalBalances",
+        description: "Get historical token balances for a wallet address.",
+        schema: z.object({
+          address: z.string().describe("The wallet address"),
+          networkId: z
+            .enum(["mainnet", "bsc", "base", "arbitrum-one", "optimism", "matic", "unichain"])
+            .describe("The network ID"),
+          timePeriod: z.string().optional().default("1d").describe("Time period (e.g., 1d, 7d, 30d)"),
+        }) as any,
+        invoke: async (args: any) => this.getHistoricalBalances(walletProvider, args),
+      },
+      {
+        name: "testForcePayment",
+        description:
+          "Test x402 force payment mode with a simple token balance query. This will force a payment even for free tier requests.",
+        schema: z.object({
+          address: z.string().describe("The wallet address to test with"),
+          networkId: z
+            .enum(["mainnet", "bsc", "base", "arbitrum-one", "optimism", "matic", "unichain"])
+            .optional()
+            .default("mainnet")
+            .describe("The network ID"),
+        }) as any,
+        invoke: async (args: any) => {
+          console.log("🧪 Testing force payment mode with token balance query");
+
+          if (!this.x402Config.forcePayment) {
+            return JSON.stringify(
+              {
+                error: "Force payment mode is not enabled. Set X402_FORCE_PAYMENT=true in your environment variables.",
+                currentConfig: {
+                  enabled: this.x402Config.enabled,
+                  forcePayment: this.x402Config.forcePayment,
+                },
+              },
+              null,
+              2,
+            );
+          }
+
+          // Use the existing getTokenBalances method which now has force payment wrapper
+          return await this.getTokenBalances(walletProvider, args);
+        },
+      },
+    ];
+  }
 }
 
-export const tokenApiProvider = (x402Config: X402Config) => new TokenApiProvider(x402Config); 
+export const tokenApiProvider = (x402Config: X402Config) => new TokenApiProvider(x402Config);

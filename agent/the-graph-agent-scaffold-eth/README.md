@@ -1392,73 +1392,113 @@ X402_FACILITATOR_URL=https://facilitator.x402.org             # Facilitator serv
 X402_WALLET_ADDRESS=0x...                                     # Wallet address for payments
 X402_NETWORK=base                                              # Network for payments
 X402_USDC_CONTRACT=0xA0b86a33E6441c0a8C6f8A0b8e1d7BcF2eD3c0e2 # USDC contract address
+X402_QUERY_PRICE=10000                                        # Price per query in smallest units
+X402_FORCE_PAYMENT=true                                       # Force payments even for free tier (testing)
+X402_SKIP_VALIDATION=true                                     # Skip validation for development
 ```
 
-### Implementation Details
+### Troubleshooting x402 Issues
 
-#### GraphMCPProvider Enhancement
+If you encounter x402 payment errors, here are common solutions:
 
-The Graph MCP provider has been enhanced with x402 support:
+#### 1. "Payment verification failed: Bad Request (400)"
 
-```typescript
-// Initialize with x402 configuration
-const provider = graphMCPProvider({
-    enabled: true,
-    walletAddress: "0x...",
-    facilitatorUrl: "https://facilitator.x402.org",
-    network: "base",
-    usdcContract: "0xA0b86a33E6441c0a8C6f8A0b8e1d7BcF2eD3c0e2",
-});
+This usually means the facilitator is rejecting the payment payload. For development, enable skip validation:
 
-// All MCP actions now support automatic payments
-const actions = provider.getActions(walletProvider);
+```bash
+X402_SKIP_VALIDATION=true
 ```
 
-#### Payment Flow Implementation
+#### 2. "X402_WALLET_ADDRESS is not set"
 
-```typescript
-// 1. Detect 402 Payment Required responses
-if (error.status === 402 || error.message?.includes("Payment Required")) {
-    // 2. Parse payment instructions from response headers
-    const paymentInstructions = parsePaymentInstructions(error);
+The wallet address is required for payments. You can either:
 
-    // 3. Create payment handler
-    const paymentHandler = new X402PaymentHandler(x402Config, walletProvider);
+-   Set `X402_WALLET_ADDRESS` explicitly in your environment
+-   Set `AGENT_PRIVATE_KEY` and the address will be derived automatically
 
-    // 4. Process payment
-    const paymentPayload = await paymentHandler.handlePaymentRequired(
-        paymentInstructions
-    );
+#### 3. "Facilitator not available"
 
-    // 5. Retry request with payment credentials
-    return await retryWithPayment(tool, args, paymentPayload);
-}
+The x402 facilitator is still in development. For testing:
+
+```bash
+X402_SKIP_VALIDATION=true
+X402_FORCE_PAYMENT=true
 ```
 
-#### EIP-712 Signature Creation
+#### 4. Environment Setup
 
-The system uses EIP-712 signatures for secure USDC transfers:
+Copy the example environment file and configure it:
 
-```typescript
-// EIP-712 domain for USDC transferWithAuthorization
-const domain = {
-    name: "USD Coin",
-    version: "2",
-    chainId: 8453, // Base network
-    verifyingContract: "0xA0b86a33E6441c0a8C6f8A0b8e1d7BcF2eD3c0e2",
-};
+```bash
+cp packages/nextjs/env.example packages/nextjs/.env.local
+# Edit .env.local with your values
+```
 
-// Create transferWithAuthorization signature
-const message = {
-    from: walletAddress,
-    to: recipient,
-    value: amount,
-    validAfter: "0",
-    validBefore: deadline,
-    nonce: nonce,
-};
+#### 5. Debug Mode
 
-const signature = await walletProvider.signTypedData(domain, types, message);
+Enable debug logging to see detailed x402 information:
+
+```bash
+NODE_ENV=development
+```
+
+You should see logs like:
+
+```
+🚀 x402 Configuration: { network: 'baseSepolia', enabled: true, ... }
+💳 Processing x402 payment: {...}
+⚠️  Skipping payment verification due to skipValidation flag
+```
+
+### Force Payment Mode
+
+For testing and demonstration purposes, you can enable **Force Payment Mode** which will simulate x402 payments even for requests that would normally be free. This is useful for:
+
+-   **Testing Payment Flow**: Verify that x402 payments work correctly without hitting actual rate limits
+-   **Demonstration**: Show how the payment system works in presentations or demos
+-   **Development**: Test payment logic during development without consuming actual API quotas
+
+#### Enabling Force Payment Mode
+
+```bash
+# Add to your .env.local file
+X402_FORCE_PAYMENT=true
+```
+
+#### Testing Force Payment Mode
+
+Use the built-in test action to verify force payment functionality:
+
+```
+Test force payment mode with a simple token balance query
+```
+
+This will:
+
+1. Force a 402 Payment Required response
+2. Process the payment using the agent's wallet
+3. Execute the original request after payment
+4. Return the results with payment confirmation
+
+#### Force Payment in Action
+
+When force payment mode is enabled, you'll see logs like:
+
+```
+🧪 Force payment mode enabled - simulating 402 Payment Required
+🤖 Agent handling x402 payment for token balance query
+💳 Processing x402 payment: [payment instructions]
+🔍 Creating transferWithAuthorization signature...
+✅ Force payment processed successfully, now executing original function
+```
+
+#### Disabling Force Payment Mode
+
+To return to normal operation (only pay when actually required):
+
+```bash
+# Remove or set to false
+X402_FORCE_PAYMENT=false
 ```
 
 ### API Route Integration
@@ -2050,360 +2090,4 @@ Proper configuration of environment variables is crucial for the application to 
 
 ### Security Best Practices
 
--   Never commit `.env.local` to version control
--   Keep private keys secure
--   Use dedicated development keys only
--   Rotate keys regularly
--   Store minimal funds in development keys
--   Use air-gapped devices for key generation in production
--   Implement rate limiting for API endpoints
--   Monitor API usage and set up alerts
--   Regular security audits recommended
-
-⚠️ **IMPORTANT SECURITY NOTICE**:
-This code is not audited and is intended for development and learning purposes only.
-
--   Do not use in production without a security audit
--   Do not store significant funds in development keys
--   Do not expose API keys or private keys
--   Use at your own risk!
-
-## Performance Optimization
-
-Best practices for optimizing application performance across all integrations.
-
-### Query Optimization
-
--   **Use pagination** for large result sets (max 100 items per request for APIs)
--   **Limit the number of fields requested** in GraphQL queries
--   **Cache responses** when appropriate, especially for static data like collection metadata
--   **Use variables** for dynamic values in GraphQL queries
--   **Implement request batching** where possible
--   **Specify filters** to reduce dataset size before processing
-
-### API Performance
-
--   **Monitor query execution time** and set reasonable timeouts
--   **Implement retry logic** with exponential backoff for failed requests
--   **Use appropriate indexes** for database queries
--   **Cache frequently accessed data** like token metadata and collection info
--   **Rate limit awareness** - respect API limits and implement queue systems if needed
-
-### Error Handling
-
--   **Always check for error responses** from all API calls
--   **Log errors** comprehensively for debugging
--   **Provide user-friendly error messages** while preserving technical details for developers
--   **Implement circuit breakers** for external API dependencies
--   **Graceful degradation** when services are unavailable
-
-### Chat Interface Optimization
-
--   **Stream responses** for better user experience
--   **Optimize re-renders** by memoizing expensive components
--   **Efficient message rendering** with proper key props
--   **Debounce user input** to prevent excessive API calls
--   **Loading states** to provide feedback during processing
-
-## Direct API Usage
-
-For developers who want to interact with the APIs directly without the chat interface:
-
-### GraphQL Queries
-
-Example query for Uniswap V3 pools:
-
-```graphql
-query {
-    pools(first: 100, orderBy: createdAtTimestamp, orderDirection: desc) {
-        id
-        token0 {
-            symbol
-        }
-        token1 {
-            symbol
-        }
-        volumeUSD
-        createdAtTimestamp
-    }
-}
-```
-
-Example query for Aave V3 borrows:
-
-```graphql
-query {
-    borrows(first: 100, orderBy: timestamp, orderDirection: desc) {
-        amount
-        amountUSD
-        asset {
-            name
-            symbol
-        }
-    }
-}
-```
-
-### Token API Direct Calls
-
-```typescript
-// Example: Fetch token balances using utility function
-import { fetchTokenBalances } from "./utils/chat/agentkit/token-api/utils";
-
-const balances = await fetchTokenBalances("0x123...", {
-    networkId: "mainnet",
-    page: 1,
-    page_size: 20,
-});
-```
-
-### NFT API Direct Calls
-
-```typescript
-// Example: Fetch NFT collections
-import { fetchNFTCollections } from "./utils/chat/agentkit/token-api/utils";
-
-const collections = await fetchNFTCollections({
-    networkId: "mainnet",
-    limit: 10,
-});
-```
-
-## System Architecture
-
-Understanding the application's technical architecture and how components work together.
-
-### Core Components
-
-Detailed explanations of the foundational pieces of this application.
-
-1.  **Chat Interface** (`app/chat/page.tsx`)
-
-    -   **Functionality**: Provides the user-facing UI for interacting with the AI agent. Users can type natural language queries related to blockchain data, smart contracts, or token information.
-    -   **Technologies**: Built with Next.js (React), utilizing hooks like `useChat` for managing conversation state, input handling, and message streaming.
-    -   **Key Aspects**: Supports real-time streaming of AI responses, renders markdown for formatted text, and displays structured information from tool calls (e.g., GraphQL query results).
-
-2.  **AgentKit Integration** (Primarily in `app/api/chat/route.ts` and `utils/chat/agentkit/`)
-
-    -   **Functionality**: The backbone of the AI's ability to perform actions. AgentKit allows the definition of "tools" or "actions" that the AI (e.g., OpenAI GPT model) can invoke to interact with external systems.
-    -   **Key Aspects**:
-        -   **Action Providers**: Developers can implement `ActionProvider` interfaces (like `GraphQuerierProvider` or `TokenApiProvider`) to define specific capabilities.
-        -   **Tool Definition**: Actions are described with a name, description, and a Zod schema for input validation, making them understandable and usable by the AI.
-        -   **Invocation**: The AI decides which tool to use based on the user's query and the provided descriptions.
-
-3.  **MCP Integration** (`utils/chat/agentkit/action-providers/graph-mcp-provider.ts`)
-
-    -   **Functionality**: Connects directly to The Graph's official Model Context Protocol (MCP) server for advanced subgraph discovery and querying.
-    -   **Key Aspects**: Official MCP server connection, dynamic subgraph discovery, schema introspection, and flexible querying.
-
-4.  **Token & NFT API Integration** (Proxy: `app/api/token-proxy/route.ts`, Utilities: `utils/chat/agentkit/token-api/utils.ts`)
-
-    -   **Functionality**: Provides comprehensive access to token and NFT data through secure proxy endpoints.
-    -   **Key Aspects**: Multi-network support, comprehensive filtering, type-safe schemas, and error handling.
-
-### Data Flow
-
-```
-User Query → Chat Interface → API Route → AgentKit → Action Provider → External API/MCP Server → Response → AI Processing → Formatted Response → User
-```
-
-### Key Files
-
-This section highlights critical files and their roles:
-
--   **`app/api/chat/route.ts`** - Main chat API endpoint and AI orchestration
--   **`utils/chat/agentkit/action-providers/`** - Provider implementations for different data sources
--   **`utils/chat/agentkit/token-api/`** - Token and NFT API utilities and schemas
--   **`app/api/token-proxy/route.ts`** - Secure proxy for external API calls
-
-## Development Guide
-
-Guidelines for extending and maintaining the application.
-
-### Adding New Integrations
-
-1.  **Define the Need**: What new capability do you want the AI to have? (e.g., fetch NFT floor prices, execute a swap quote).
-2.  **Implement ActionProvider Interface**:
-    -   Create a new class that implements `ActionProvider` (similar to `GraphQuerierProvider`).
-    -   If interacting with an external API, consider if a new proxy route (like `/api/token-proxy`) is needed for security or if existing ones can be used.
-    -   Develop utility functions (like those in `token-api/utils.ts`) that your provider's actions will call. These utilities should handle the actual API calls, parameter construction, and response normalization.
-    -   Define Zod schemas for the action's input parameters and expected output structure (in a relevant `schemas.ts` file).
-3.  **Register Provider in AgentKit**:
-    -   In `app/api/chat/route.ts` (or a dedicated AgentKit setup file), add your new provider to the list of providers when `createAgentKit` is called.
-    -   Ensure `getTools(agentKit)` correctly picks up actions from your new provider.
-4.  **Update System Prompts**:
-    -   Modify the system prompt in `app/api/chat/route.ts` to inform the AI about the new tool:
-        -   Its name.
-        -   A clear description of what it does.
-        -   The schema of its expected input (especially key parameters).
-        -   An example of how to use it.
-5.  **Implement Error Handling**:
-    -   Your action's `invoke` method should have robust error handling.
-    -   Catch errors from API calls or internal logic.
-    -   Return errors in a structured way that the AI or chat interface can understand and display gracefully (e.g., using the `error` field of `ApiResponseSchema`).
-6.  **Testing**:
-    -   Unit test your utility functions and the `invoke` method of your action.
-    -   Perform integration testing by sending chat messages that should trigger your new action. Verify the AI calls it correctly and processes the result.
-
-### Customizing Responses
-
-How the AI presents information back to the user.
-
-1.  **Data Formatting in Agent**:
-    -   While the AI handles natural language generation, your tools should return data in a clean, structured, and predictable format (often JSON).
-    -   The system prompt can guide the AI on how to summarize or present this data (e.g., "When presenting token balances, include the token symbol, amount, and USD value if available.").
-2.  **Markdown Rendering**: The chat interface uses `ReactMarkdown`. Your AI can be prompted to use markdown for better readability (e.g., tables, lists, bolding).
-3.  **Handling Edge Cases**:
-    -   Prompt the AI on how to respond if data is not found, or if an error occurs (e.g., "If token details are not found, clearly state that.").
-    -   Your tools should return distinct error messages or codes for different failure scenarios.
-4.  **Providing Helpful Context**:
-    -   Encourage the AI (via system prompt) to not just dump data, but to provide context or brief explanations, especially for complex information.
-    -   For example, after showing token transfers, it might add, "These are the most recent transfers within the last X days."
-
-### Testing Strategies
-
-A multi-layered approach to ensure reliability.
-
-1.  **Unit Test Actions & Utilities**:
-    -   Write unit tests (e.g., using Jest or Vitest) for your `ActionProvider` methods (especially `invoke`) and any utility functions (like those in `token-api/utils.ts`).
-    -   Mock external API calls to test logic in isolation.
-    -   Test various input scenarios, including valid, invalid, and edge cases.
-    -   Verify correct parameter construction for API calls and proper response parsing/normalization.
-2.  **Integration Test Flows**:
-    -   Test the interaction between components: Chat UI -> Chat API -> AgentKit -> Action Provider -> External API (mocked or live dev instance).
-    -   Ensure that a user query correctly triggers the intended action and that the data flows through the system as expected.
-3.  **End-to-End Chat Testing**:
-    -   Manually interact with the chat interface using a wide range of queries.
-    -   Verify the AI's understanding, tool selection, and response quality.
-    -   Test conversational flows (e.g., follow-up questions).
-4.  **Error Scenario Testing**:
-    -   Deliberately introduce conditions that cause errors (e.g., invalid API keys, incorrect query parameters, external API downtime (mocked)).
-    -   Verify that errors are handled gracefully at each level (action, proxy, API route, UI) and that informative messages are shown to the user.
-    -   Check the system prompt for instructions on how the AI should behave when tools return errors.
-
-## Troubleshooting
-
-### Common Issues
-
-1. **API Key Errors**
-
-    - Verify environment variables are set
-    - Check API key validity
-    - Ensure sufficient credits
-
-2. **Authentication Errors**
-
-    - Verify SIWE sign-in
-    - Check session validity
-    - Review NextAuth configuration
-
-3. **Query Errors** (GraphQL & Token API)
-
-    - Validate GraphQL syntax
-    - Check subgraph schema
-    - Verify variable formatting
-    - For Token API, ensure the `path` parameter in `app/api/token-proxy/route.ts` is correctly formed and that all required parameters for the specific external API endpoint are being passed. Check the proxy's server-side logs for details on the outgoing request.
-
-4. **MCP Connection Issues**
-
-    - **Authentication Failures**: Verify `GRAPH_API_KEY` is correctly set and valid for MCP access
-    - **Connection Timeout**: MCP server may be temporarily unavailable, check The Graph's status page
-    - **Tool Not Found**: Use `listMCPTools` action to verify available tools on the MCP server
-    - **Invalid Parameters**: Ensure correct parameter format (e.g., chain names: 'mainnet', not 'ethereum')
-    - **SSE Connection Issues**: Server-Sent Events transport may fail due to network/proxy issues
-
-5. **Token API Proxy Issues**
-
-    - **Misconfigured URL/Auth**: Double-check `NEXT_PUBLIC_GRAPH_API_URL`, `NEXT_PUBLIC_GRAPH_API_KEY`, and `NEXT_PUBLIC_GRAPH_TOKEN` (and their non-public equivalents if used) in your `.env.local` file.
-    - **Path resolution**: Ensure the `path` parameter sent to `/api/token-proxy` correctly maps to the intended external API endpoint.
-    - **External API Downtime/Errors**: The external Token API itself might be having issues. Check its status page if available. The proxy should forward error messages from the external API.
-    - **Server-side logs**: Check the terminal output where your Next.js app is running for logs from `app/api/token-proxy/route.ts`. These logs often contain the exact URL being called and any errors received.
-
-6. **NFT API Issues**
-
-    - **Invalid Contract Addresses**: Ensure NFT contract addresses are valid and exist on the specified network. Use checksum addresses when possible.
-    - **Network Mismatches**: Verify that the NFT collection exists on the specified network (mainnet, polygon, etc.). Cross-check contract deployment networks.
-    - **Token Not Found**: When querying specific token IDs, ensure they exist within the collection and haven't been burned.
-    - **Rate Limiting**: NFT endpoints may have stricter rate limits due to data complexity. Implement proper retry logic with exponential backoff.
-    - **Large Collections**: For collections with millions of NFTs, use pagination and specific filtering to avoid timeouts.
-    - **Metadata Unavailability**: Some NFTs may have missing or invalid metadata. Handle null/undefined values gracefully.
-    - **Cross-Network Data**: When analyzing multi-network NFTs, remember to specify the correct networkId for each query.
-
-7. **x402 Payment Issues**
-    - **Payment Failures**: Verify wallet has sufficient USDC balance and network configuration (Base recommended for fee-free transactions).
-    - **Configuration Errors**: Ensure all x402 environment variables are properly set and wallet address is checksummed.
-    - **EIP-712 Signature Issues**: Validate that the wallet provider supports EIP-712 signing and signatures are properly formatted.
-    - **Facilitator Connection**: Check that the facilitator URL is accessible and responding correctly.
-    - **Network Compatibility**: Ensure the selected network supports the specified USDC contract address.
-
-## API Reference
-
-Quick reference for all available integrations and their capabilities.
-
-### MCP Integration Summary
-
--   **Purpose**: Dynamic subgraph discovery and querying
--   **Endpoint**: The Graph's official MCP server
--   **Key Tools**: `searchSubgraphs`, `getContractSubgraphs`, `getSubgraphSchema`, `executeMCPQuery`
--   **Authentication**: GRAPH_API_KEY as Bearer token
-
-### Token API Summary
-
--   **Purpose**: Comprehensive token data access
--   **Networks**: All major EVM networks (7 supported)
--   **Key Functions**: Balance checking, transfer history, metadata retrieval
--   **Proxy**: `/api/token-proxy` for secure API access
-
-### NFT API Summary
-
--   **Purpose**: NFT analytics and tracking
--   **Networks**: All major EVM networks (7 supported)
--   **Key Functions**: Collection analysis, ownership tracking, sales data, activity monitoring
--   **Tools**: 6 specialized NFT endpoints
--   **Proxy**: `/api/token-proxy` (shared with Token API)
-
-### x402 Payment Summary
-
--   **Purpose**: Autonomous micropayments for AI agents
--   **Protocol**: Coinbase's open payment standard using HTTP 402
--   **Networks**: Base (primary), Ethereum, Polygon
--   **Token**: USDC via transferWithAuthorization
--   **Integration**: Automatic payment handling in Graph MCP provider
-
-### Environment Variables Reference
-
-```bash
-# Required
-GRAPH_API_KEY=your-graph-api-key              # The Graph Protocol access
-OPENAI_API_KEY=your-openai-api-key            # AI functionality
-NEXTAUTH_SECRET=your-nextauth-secret          # Session management
-
-# Optional
-AGENT_PRIVATE_KEY=0x...                       # On-chain transactions
-NEXT_PUBLIC_GRAPH_API_KEY=your-token-api-key  # Token API access
-
-# x402 Payment Configuration
-X402_ENABLED=true                             # Enable x402 payments
-X402_FACILITATOR_URL=https://facilitator.x402.org  # Facilitator service
-X402_WALLET_ADDRESS=0x...                     # Payment wallet address
-X402_NETWORK=base                             # Payment network
-X402_USDC_CONTRACT=0xA0b86a33E6441c0a8C6f8A0b8e1d7BcF2eD3c0e2  # USDC contract
-```
-
-### Supported Networks
-
--   **Mainnet** (`mainnet`) - Ethereum mainnet
--   **BSC** (`bsc`) - Binance Smart Chain
--   **Base** (`base`) - Coinbase Layer 2
--   **Arbitrum** (`arbitrum-one`) - Arbitrum One
--   **Optimism** (`optimism`) - Optimism mainnet
--   **Polygon** (`matic`) - Polygon mainnet
--   **Unichain** (`unichain`) - Unichain network
-
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for guidelines.
-
-## Documentation
-
-For more detailed information, visit our [documentation](https://docs.scaffoldeth.io).
+-   Never commit `.env.local`

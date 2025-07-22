@@ -39,19 +39,18 @@ export async function GET(request: NextRequest) {
       "Content-Type": "application/json",
     };
 
-    // First try to use API key if available
-    if (process.env.NEXT_PUBLIC_GRAPH_API_KEY) {
-      headers["X-Api-Key"] = process.env.NEXT_PUBLIC_GRAPH_API_KEY;
-      console.log("🔑 Using API key for authentication");
-    }
-    // Fall back to JWT token if no API key
-    else if (process.env.NEXT_PUBLIC_GRAPH_TOKEN) {
+    // Use JWT token for Token API authentication
+    if (process.env.NEXT_PUBLIC_GRAPH_TOKEN && process.env.NEXT_PUBLIC_GRAPH_TOKEN.trim() !== "") {
       headers["Authorization"] = `Bearer ${process.env.NEXT_PUBLIC_GRAPH_TOKEN}`;
-      console.log("🔒 Using JWT token for authentication");
+      console.log("🔒 Using JWT token for Token API authentication");
     } else {
       console.warn(
-        "⚠️ No API token or key found in environment variables. API calls may fail due to authentication issues.",
+        "⚠️ No valid JWT token found in NEXT_PUBLIC_GRAPH_TOKEN. Token API calls may fail due to authentication issues.",
       );
+      console.warn("Available env vars:", {
+        hasToken: !!process.env.NEXT_PUBLIC_GRAPH_TOKEN,
+        tokenLength: process.env.NEXT_PUBLIC_GRAPH_TOKEN?.length || 0,
+      });
     }
 
     // Make the API request

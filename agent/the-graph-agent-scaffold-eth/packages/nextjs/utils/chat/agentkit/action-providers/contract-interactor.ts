@@ -1,5 +1,5 @@
 import { ActionProvider, EvmWalletProvider, Network, CreateAction, WalletProvider } from "@coinbase/agentkit";
-import { z } from "zod";
+import { z, type infer } from "zod";
 import deployedContracts from "~~/contracts/deployedContracts";
 import { Hex } from "viem";
 import { encodeFunctionData } from "viem";
@@ -63,7 +63,7 @@ class ContractInteractor extends ActionProvider<WalletProvider> {
     @CreateAction({
         name: "read-contract",
         description: "Call a read-only function on a contract",
-        schema: ContractInteractor.SCHEMA,
+        schema: ContractInteractor.SCHEMA as any,
     })
     async readContract(walletProvider: EvmWalletProvider, args: z.infer<typeof ContractInteractor.SCHEMA>): Promise<string> {
         try {
@@ -73,8 +73,8 @@ class ContractInteractor extends ActionProvider<WalletProvider> {
             const result = await walletProvider.readContract({
                 address: contract.address,
                 abi: contract.abi,
-                functionName: args.functionName,
-                args: args.functionArgs,
+                functionName: args.functionName as any,
+                args: args.functionArgs as any,
             });
 
             return `Result of ${args.functionName} on ${args.contractName}: ${result}`;
@@ -86,7 +86,7 @@ class ContractInteractor extends ActionProvider<WalletProvider> {
     @CreateAction({
         name: "write-contract",
         description: "Call a write function on a contract",
-        schema: ContractInteractor.SCHEMA,
+        schema: ContractInteractor.SCHEMA as any,
     })
     async writeContract(walletProvider: EvmWalletProvider, args: z.infer<typeof ContractInteractor.SCHEMA>) {
         try {

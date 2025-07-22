@@ -1,6 +1,8 @@
 import { contractInteractor } from "./agentkit/action-providers/contract-interactor";
 import { graphMCPProvider } from "./agentkit/action-providers/graph-mcp-provider";
 import { SUBGRAPH_ENDPOINTS, graphQuerierProvider } from "./agentkit/action-providers/graph-querier";
+import { smartWalletAnalyzerProvider } from "./agentkit/action-providers/smart-wallet-analyzer";
+import { testX402Provider } from "./agentkit/action-providers/test-x402-provider";
 import { tokenApiProvider } from "./agentkit/action-providers/token-api-provider";
 import { agentKitToTools } from "./agentkit/framework-extensions/ai-sdk";
 import { getDefaultX402Config } from "./agentkit/x402";
@@ -22,12 +24,26 @@ export async function createAgentKit() {
   });
   const viemWalletProvider = new ViemWalletProvider(walletClient as any);
 
-  // Get X402 configuration for chat context (skip validation at action level)
+  // Get X402 configuration for agent to handle payments internally
   const x402Config = {
     ...getDefaultX402Config(),
-    skipValidation: true, // Payment handled at chat route level
+    enabled: true, // Enable x402 for agent to handle payments
+    forcePayment: true, // Force x402 payments to test real transactions
+    skipValidation: true, // Skip validation for development to avoid facilitator issues
   };
 
+  console.log("🚀 x402 Configuration:", {
+    network: x402Config.network,
+    usdcContract: x402Config.usdcContract,
+    walletAddress: x402Config.walletAddress
+      ? `${x402Config.walletAddress.slice(0, 6)}...${x402Config.walletAddress.slice(-4)}`
+      : "not set",
+    enabled: x402Config.enabled,
+    forcePayment: x402Config.forcePayment,
+    skipValidation: x402Config.skipValidation,
+  });
+
+  // Use the base wallet provider - x402 payments will be handled in action providers
   const agentKit = await AgentKit.from({
     walletProvider: viemWalletProvider,
     actionProviders: [
@@ -35,7 +51,9 @@ export async function createAgentKit() {
       contractInteractor(foundry.id),
       graphQuerierProvider(x402Config),
       graphMCPProvider(x402Config),
+      smartWalletAnalyzerProvider(x402Config),
       tokenApiProvider(x402Config),
+      testX402Provider(x402Config),
     ],
   });
 
